@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Watermark Remover</title>
+    <style>
+        /* වෙබ් අඩවියේ පෙනුම (CSS) */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 26px;
+            margin-bottom: 10px;
+            color: #111;
+        }
+        p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 90%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #6a11cb;
+        }
+        button {
+            background: #6a11cb;
+            color: white;
+            border: none;
+            padding: 14px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 97%;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2575fc;
+        }
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6a11cb;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .result {
+            margin-top: 25px;
+            display: none;
+        }
+        .download-btn {
+            background: #00b4d8;
+            display: inline-block;
+            padding: 12px 25px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 15px;
+            width: 87%;
+            transition: background 0.3s;
+        }
+        .download-btn:hover {
+            background: #0077b6;
+        }
+        .preview-video {
+            width: 100%;
+            max-height: 250px;
+            border-radius: 8px;
+            margin-top: 10px;
+            background: #000;
+        }
+        .error {
+            color: #ff4d4d;
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>TikTok Downloader</h1>
+        <p>Watermark නොමැතිව වීඩියෝ නොමිලේම බාගත කරගන්න</p>
+        
+        <input type="text" id="tiktokUrl" placeholder="TikTok වීඩියෝ ලින්ක් එක මෙතනට Paste කරන්න...">
+        <button id="downloadBtn" onclick="downloadVideo()">වීඩියෝව ලබාගන්න</button>
+        
+        <div class="loader" id="loader"></div>
+        <div class="error" id="errorMsg"></div>
+
+        <div class="result" id="resultContainer">
+            <h3 style="margin-bottom: 5px;">ඔබේ වීඩියෝව සූදානම්!</h3>
+            <video id="videoPreview" class="preview-video" controls></video>
+            <br>
+            <a id="downloadLink" class="download-btn" href="#" target="_blank" rel="noopener noreferrer">Watermark නැතුව Download කරන්න</a>
+        </div>
+    </div>
+
+    <script>
+        // වීඩියෝව බාගත කරන JavaScript ශ්‍රිතය (Function)
+        async function downloadVideo() {
+            const urlInput = document.getElementById('tiktokUrl').value.trim();
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('resultContainer');
+            const errorMsg = document.getElementById('errorMsg');
+            const videoPreview = document.getElementById('videoPreview');
+            const downloadLink = document.getElementById('downloadLink');
+
+            // කලින් තිබුන දත්ත Clear කිරීම
+            errorMsg.innerText = '';
+            resultContainer.style.display = 'none';
+
+            // Input එක හිස්දැයි බැලීම
+            if (!urlInput) {
+                errorMsg.innerText = 'කරුණාකර TikTok ලින්ක් එකක් ඇතුලත් කරන්න!';
+                return;
+            }
+
+            // Loader එක පෙන්වීම
+            loader.style.display = 'block';
+
+            try {
+                // TikWM නොමිලේ දෙන API එකට Request එකක් යැවීම
+                const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(urlInput)}`;
+                const response = await fetch(apiUrl);
+                const result = await response.json();
+
+                loader.style.display = 'none';
+
+                // වීඩියෝව සාර්ථකව ලැබුනොත්
+                if (result && result.data && result.data.play) {
+                    const noWatermarkUrl = result.data.play; // Watermark නැති වීඩියෝ ලින්ක් එක
+                    
+                    // Video Player එකට සහ Download Button එකට ලින්ක් එක එකතු කිරීම
+                    videoPreview.src = noWatermarkUrl;
+                    downloadLink.href = noWatermarkUrl;
+                    
+                    // Result එක Screen එකේ පෙන්වීම
+                    resultContainer.style.display = 'block';
+                } else {
+                    errorMsg.innerText = 'වීඩියෝව සොයාගත නොහැකි විය. කරුණාකර ලින්ක් එක නිවැරදිදැයි පරීක්ෂා කරන්න.';
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                errorMsg.innerText = 'සර්වර් එක සම්බන්ධ කරගැනීමේ ගැටලුවක් මතු විය. පසුව උත්සාහ කරන්න.';
+                console.error(error);
+            }
+        }
+    </script>
+
+</body>
+</html>
