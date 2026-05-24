@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Watermark Remover</title>
+    <title>TikTok Direct Downloader</title>
     <style>
-        /* වෙබ් අඩවියේ පෙනුම (CSS) */
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
@@ -42,13 +41,11 @@
             border-radius: 8px;
             font-size: 15px;
             outline: none;
-            transition: border-color 0.3s;
         }
         input[type="text"]:focus {
             border-color: #6a11cb;
         }
-        button {
-            background: #6a11cb;
+        .btn {
             color: white;
             border: none;
             padding: 14px;
@@ -60,7 +57,10 @@
             width: 97%;
             transition: background 0.3s;
         }
-        button:hover {
+        #getBtn {
+            background: #6a11cb;
+        }
+        #getBtn:hover {
             background: #2575fc;
         }
         .loader {
@@ -83,22 +83,18 @@
         }
         .download-btn {
             background: #00b4d8;
-            display: inline-block;
-            padding: 12px 25px;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            margin-top: 15px;
-            width: 87%;
-            transition: background 0.3s;
+            width: 97%;
         }
         .download-btn:hover {
             background: #0077b6;
         }
+        .download-btn:disabled {
+            background: #aaaaaa;
+            cursor: not-allowed;
+        }
         .preview-video {
             width: 100%;
-            max-height: 250px;
+            max-height: 220px;
             border-radius: 8px;
             margin-top: 10px;
             background: #000;
@@ -107,7 +103,6 @@
             color: #ff4d4d;
             margin-top: 15px;
             font-size: 14px;
-            font-weight: 500;
         }
     </style>
 </head>
@@ -115,10 +110,10 @@
 
     <div class="container">
         <h1>TikTok Downloader</h1>
-        <p>Watermark නොමැතිව වීඩියෝ නොමිලේම බාගත කරගන්න</p>
+        <p>Watermark නොමැතිව වීඩියෝ කෙලින්ම Device එකටම බාගත කරගන්න</p>
         
         <input type="text" id="tiktokUrl" placeholder="TikTok වීඩියෝ ලින්ක් එක මෙතනට Paste කරන්න...">
-        <button id="downloadBtn" onclick="downloadVideo()">වීඩියෝව ලබාගන්න</button>
+        <button id="getBtn" class="btn" onclick="fetchVideoData()">වීඩියෝව ලබාගන්න</button>
         
         <div class="loader" id="loader"></div>
         <div class="error" id="errorMsg"></div>
@@ -127,58 +122,89 @@
             <h3 style="margin-bottom: 5px;">ඔබේ වීඩියෝව සූදානම්!</h3>
             <video id="videoPreview" class="preview-video" controls></video>
             <br>
-            <a id="downloadLink" class="download-btn" href="#" target="_blank" rel="noopener noreferrer">Watermark නැතුව Download කරන්න</a>
+            <button id="realDownloadBtn" class="btn download-btn" onclick="triggerDirectDownload()">කෙලින්ම Download කරගන්න</button>
         </div>
     </div>
 
     <script>
-        // වීඩියෝව බාගත කරන JavaScript ශ්‍රිතය (Function)
-        async function downloadVideo() {
+        let cachedVideoUrl = ''; // API එකෙන් එන link එක තියාගන්න variable එකක්
+
+        async function fetchVideoData() {
             const urlInput = document.getElementById('tiktokUrl').value.trim();
             const loader = document.getElementById('loader');
             const resultContainer = document.getElementById('resultContainer');
             const errorMsg = document.getElementById('errorMsg');
             const videoPreview = document.getElementById('videoPreview');
-            const downloadLink = document.getElementById('downloadLink');
 
-            // කලින් තිබුන දත්ත Clear කිරීම
             errorMsg.innerText = '';
             resultContainer.style.display = 'none';
+            cachedVideoUrl = '';
 
-            // Input එක හිස්දැයි බැලීම
             if (!urlInput) {
                 errorMsg.innerText = 'කරුණාකර TikTok ලින්ක් එකක් ඇතුලත් කරන්න!';
                 return;
             }
 
-            // Loader එක පෙන්වීම
             loader.style.display = 'block';
 
             try {
-                // TikWM නොමිලේ දෙන API එකට Request එකක් යැවීම
                 const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(urlInput)}`;
                 const response = await fetch(apiUrl);
                 const result = await response.json();
 
                 loader.style.display = 'none';
 
-                // වීඩියෝව සාර්ථකව ලැබුනොත්
                 if (result && result.data && result.data.play) {
-                    const noWatermarkUrl = result.data.play; // Watermark නැති වීඩියෝ ලින්ක් එක
-                    
-                    // Video Player එකට සහ Download Button එකට ලින්ක් එක එකතු කිරීම
-                    videoPreview.src = noWatermarkUrl;
-                    downloadLink.href = noWatermarkUrl;
-                    
-                    // Result එක Screen එකේ පෙන්වීම
+                    cachedVideoUrl = result.data.play; // වීඩියෝ ලින්ක් එක සේව් කරගන්නවා
+                    videoPreview.src = cachedVideoUrl; // Preview එකක් පෙන්වනවා
                     resultContainer.style.display = 'block';
                 } else {
-                    errorMsg.innerText = 'වීඩියෝව සොයාගත නොහැකි විය. කරුණාකර ලින්ක් එක නිවැරදිදැයි පරීක්ෂා කරන්න.';
+                    errorMsg.innerText = 'වීඩියෝව සොයාගත නොහැකි විය. ලින්ක් එක නිවැරදිදැයි බලන්න.';
                 }
             } catch (error) {
                 loader.style.display = 'none';
-                errorMsg.innerText = 'සර්වර් එක සම්බන්ධ කරගැනීමේ ගැටලුවක් මතු විය. පසුව උත්සාහ කරන්න.';
+                errorMsg.innerText = 'සර්වර් සම්බන්ධතාවයේ බිඳ වැටීමක්!';
                 console.error(error);
+            }
+        }
+
+        // වීඩියෝව බ්‍රවුසර් එකෙන් හොරකම් කරලා කෙලින්ම ඩවුන්ලෝඩ් කරවන කොටස
+        async function triggerDirectDownload() {
+            if (!cachedVideoUrl) return;
+
+            const dlBtn = document.getElementById('realDownloadBtn');
+            const originalText = dlBtn.innerText;
+            
+            dlBtn.innerText = 'බාගත වෙමින් පවතී (Downloading...)...';
+            dlBtn.disabled = true;
+
+            try {
+                // වීඩියෝ ලින්ක් එක Fetch කරලා 'Blob' (File එකක්) බවට පත් කරනවා
+                const resp = await fetch(cachedVideoUrl);
+                const blob = await resp.blob();
+                
+                // ඒ Blob එකට තාවකාලික බාගත කිරීමේ ලින්ක් එකක් හදනවා
+                const dlUrl = window.URL.createObjectURL(blob);
+                const tempAnchor = document.createElement('a');
+                tempAnchor.href = dlUrl;
+                
+                // File එකට නමක් දෙනවා
+                tempAnchor.download = `TikTok_Video_${Date.now()}.mp4`;
+                
+                // හොරෙන්ම ක්ලික් කරලා ඩවුන්ලෝඩ් එක ස්ටාර්ට් කරනවා
+                document.body.appendChild(tempAnchor);
+                tempAnchor.click();
+                
+                // අනවශ්‍ය දේවල් අයින් කිරීම
+                document.body.removeChild(tempAnchor);
+                window.URL.revokeObjectURL(dlUrl);
+            } catch (err) {
+                // යම් හෙයකින් බ්‍රවුසරය මෙය බ්ලොක් කලොත් පැරණි ක්‍රමයට වීඩියෝව ඕපන් කරයි
+                window.open(cachedVideoUrl, '_blank');
+                alert('කෙලින්ම බාගත කිරීමට බ්‍රවුසරයෙන් බාධා ඇති විය. වීඩියෝව ප්ලේ වන විට එය මත Long Press කර හෝ Right Click කර "Save Video As" ලබා දෙන්න.');
+            } finally {
+                dlBtn.innerText = originalText;
+                dlBtn.disabled = false;
             }
         }
     </script>
