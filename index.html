@@ -12,6 +12,7 @@
         .video-title { font-weight: bold; font-size: 1.1em; color: #007bff; }
         .video-id { font-family: monospace; background: #eee; padding: 3px 6px; border-radius: 3px; font-size: 0.9em; display: inline-block; margin-top: 5px; word-break: break-all; }
         #loading { font-style: italic; color: #666; }
+        .error-msg { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -21,28 +22,34 @@
     <div id="listContainer" class="list-container"></div>
 
     <script>
-        // උඹේ අලුත්ම Google Web App URL එක මෙතනට දාන්න
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbykuP51sy1QILFNLdZyNEb70HfkDZYs3mYnU8PWltyH0uL_ZxwXS9ZjkqG07dlMIJwh/exec"; 
+        // උඹේ අලුත්ම Web App URL එක මෙතනට දාපං
+        const GAS_URL = "https://script.google.com/macros/s/AKfycby-il2l6fjwLjoeTppk8us3hjmHMNtoTqAPF3QNcxCj2pQeHecZVb7vDioG-0rVd0cZ/exec"; 
 
         async function loadVideoList() {
             const container = document.getElementById('listContainer');
             const loadingText = document.getElementById('loading');
             
             try {
-                // Google Sheet එකෙන් කෙලින්ම Fetch කරනවා
+                // කෙලින්ම Google එකෙන් Data ඉල්ලනවා
                 const response = await fetch(GAS_URL);
-                const videos = await response.json();
+                const result = await response.json();
                 
-                loadingText.style.display = "none"; // Loading text එක අයින් කරනවා
-                container.innerHTML = ""; // Container එක clear කරනවා
+                loadingText.style.display = "none";
+                container.innerHTML = "";
 
-                if(videos.length === 0) {
+                // Google Script එකෙන් Error එකක් ආවොත් ඒක පෙන්නන්න
+                if (result.error) {
+                    container.innerHTML = `<div class="error-msg">Backend Error: ${result.error}</div>`;
+                    return;
+                }
+
+                if(result.length === 0) {
                     container.innerHTML = "<div>කිසිදු වීඩියෝවක් හමුනොවීය.</div>";
                     return;
                 }
 
-                // හැම වීඩියෝ එකක්ම List එකක් විදිහට පෙන්වනවා
-                videos.forEach(v => {
+                // Data ටික List කරනවා
+                result.forEach(v => {
                     container.innerHTML += `
                         <div class="video-item">
                             <div class="video-title">🎬 ${v.title}</div>
@@ -52,12 +59,12 @@
                 });
 
             } catch (error) {
-                loadingText.innerText = "Error එකක් ආවා: " + error.message;
+                loadingText.innerText = "Error එකක් ආවා!";
+                container.innerHTML = `<div class="error-msg">Fetch Error: ${error.message}</div>`;
                 console.error("Fetch Error:", error);
             }
         }
 
-        // පිටුව ලෝඩ් වෙනකොටම function එක රන් කරනවා
         loadVideoList();
     </script>
 </body>
