@@ -27,9 +27,8 @@
     <div id="videoContainer"></div>
 
     <script>
-        // ඔබේ විස්තර මෙතන දාන්න
         const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
-        const CHANNEL_ID = "-1003754232314";
+        const CHANNEL_ID = "-1003754232314"; 
         const GAS_URL = "https://script.google.com/macros/s/AKfycby2_Lgl31OJQxeqE5umWcq-K4ClvaFMGlTgQseAEkcd8Csv0awRrsTTlaINBgI9unM7/exec";
 
         async function uploadVideo() {
@@ -52,6 +51,7 @@
 
                 if(data.ok) {
                     document.getElementById('status').innerText = "Saving to database...";
+                    // මෙතන no-cors දාන්න පුළුවන් (POST නිසා)
                     await fetch(GAS_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -60,11 +60,9 @@
                     });
                     alert("Upload Success!");
                     location.reload();
-                } else {
-                    alert("Error: " + data.description);
                 }
             } catch (err) {
-                alert("Upload failed. Check console.");
+                alert("Upload failed.");
                 console.error(err);
             }
             document.getElementById('upBtn').disabled = false;
@@ -72,6 +70,7 @@
 
         async function loadVideos() {
             try {
+                // මෙතන no-cors දාන්න එපා. standard fetch එක පාවිච්චි කරන්න.
                 const resp = await fetch(GAS_URL);
                 const videos = await resp.json();
                 const container = document.getElementById('videoContainer');
@@ -91,6 +90,7 @@
                 }
             } catch (e) {
                 console.log("Load failed:", e);
+                document.getElementById('videoContainer').innerHTML = "<p>Could not load videos.</p>";
             }
         }
         loadVideos();
