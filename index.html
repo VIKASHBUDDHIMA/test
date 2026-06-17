@@ -1,14 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Hub</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f0f2f5; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        h2 { margin-top: 0; color: #333; }
+        input { display: block; width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { display: block; width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 6px; background-color: #007bff; color: white; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #a0c4ff; cursor: not-allowed; }
+        .video-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        video { width: 100%; border-radius: 8px; margin-top: 10px; background: #000; }
+        #status { font-size: 14px; color: #666; margin-top: 10px; text-align: center; }
+    </style>
+</head>
 <body>
-    <h2>Upload Video</h2>
-    <input type="text" id="title" placeholder="Video Title">
-    <input type="file" id="videoFile">
-    <button id="upBtn" onclick="uploadVideo()">Upload</button>
-    
-    <p id="status"></p> 
-    
-    <hr>
+
+    <div class="card">
+        <h2>Video Uploader</h2>
+        <input type="text" id="title" placeholder="Enter video title...">
+        <input type="file" id="videoFile" accept="video/*">
+        <button id="upBtn" onclick="uploadVideo()">Upload to Telegram</button>
+        <p id="status"></p>
+    </div>
+
     <div id="videoContainer"></div>
 
     <script>
@@ -16,19 +34,17 @@
         const CHANNEL_ID = "-1003754232314";
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwPL6EVP40D0xyEsbmE9DWLlUpVAD35w9dparrrAQYrosAZEa_70ckO1aBnR8Vbovx5/exec";
 
-        function setStatus(msg) {
-            document.getElementById('status').innerText = msg;
-        }
+        function setStatus(msg) { document.getElementById('status').innerText = msg; }
 
         async function uploadVideo() {
             const btn = document.getElementById('upBtn');
             const file = document.getElementById('videoFile').files[0];
             const title = document.getElementById('title').value;
 
-            if(!file || !title) { alert("Title සහ File එක දෙන්න!"); return; }
+            if(!file || !title) { alert("Please provide title and file"); return; }
 
             btn.disabled = true;
-            setStatus("Uploading to Telegram... කරුණාකර රැඳී සිටින්න.");
+            setStatus("Uploading to Telegram, please wait...");
 
             try {
                 const formData = new FormData();
@@ -41,21 +57,22 @@
                 });
                 const data = await resp.json();
 
-                if(!data.ok) throw new Error("Telegram Upload Error: " + data.description);
+                if(!data.ok) throw new Error("Telegram Error: " + data.description);
 
-                setStatus("Telegram Upload සාර්ථකයි! Database එකට යවනවා...");
+                setStatus("Upload successful! Saving to database...");
 
                 await fetch(GAS_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
                 });
 
-                setStatus("සියල්ල සාර්ථකයි! Refresh වේ...");
-                location.reload(); // page එක reload කරලා අලුත් වීඩියෝ එක පෙන්නනවා
-
+                setStatus("Done!");
+                location.reload();
             } catch (err) {
                 console.error(err);
-                setStatus("Error එකක් ආවා: " + err.message);
+                setStatus("Error: " + err.message);
                 btn.disabled = false;
             }
         }
@@ -65,19 +82,17 @@
                 const resp = await fetch(GAS_URL);
                 const videos = await resp.json();
                 const container = document.getElementById('videoContainer');
-                container.innerHTML = ""; // පරණ ඒවා අයින් කරනවා
                 
                 for(let v of videos) {
-                    // Telegram එකෙන් link එක ගන්න උත්සාහ කිරීම
                     const pathResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
                     const pathData = await pathResp.json();
                     
                     if(pathData.ok) {
                         const videoURL = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
                         container.innerHTML += `
-                            <div>
-                                <h3>${v.title}</h3>
-                                <video src="${videoURL}" controls width="400"></video>
+                            <div class="video-item">
+                                <strong>${v.title}</strong>
+                                <video src="${videoURL}" controls></video>
                             </div>`;
                     }
                 }
