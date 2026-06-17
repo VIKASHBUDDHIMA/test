@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Hub - Upload & List</title>
+    <title>Video Hub - Stream & Upload</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; }
+        .container { max-width: 650px; margin: 0 auto; }
         .card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
         h2 { margin-top: 0; color: #444; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
@@ -14,10 +14,14 @@
         input[type="text"], input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
         button { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
         button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        .video-item { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #007bff; }
-        .video-title { font-weight: bold; font-size: 1.1em; color: #333; }
-        .video-id { font-family: monospace; background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; display: inline-block; margin-top: 5px; word-break: break-all; color: #555; }
-        #loading { font-style: italic; color: #666; text-align: center; }
+        
+        /* Video Container Styles */
+        .video-item { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #007bff; }
+        .video-title { font-weight: bold; font-size: 1.1em; color: #333; margin-bottom: 10px; }
+        video { width: 100%; max-height: 360px; border-radius: 6px; background: #000; display: block; margin-top: 5px; }
+        
+        .video-status { font-style: italic; color: #666; font-size: 0.9em; padding: 10px; background: #f9f9f9; border-radius: 4px; text-align: center; }
+        #loading { font-style: italic; color: #666; text-align: center; font-size: 1.1em; }
         .error-msg { color: #dc3545; font-weight: bold; padding: 10px; background: #f8d7da; border-radius: 4px; margin-top: 10px; }
         .success-msg { color: #28a745; font-weight: bold; padding: 10px; background: #d4edda; border-radius: 4px; margin-top: 10px; }
     </style>
@@ -41,8 +45,8 @@
     </div>
 
     <div class="card">
-        <h2>Google Sheet - Video ID List</h2>
-        <div id="loading">දත්ත ලෝඩ් වෙමින් පවතී... (Loading...)</div>
+        <h2>Google Sheet - Streaming Videos</h2>
+        <div id="loading">වීඩියෝ ලැයිස්තුව ලෝඩ් වෙමින් පවතී...</div>
         <div id="listContainer"></div>
     </div>
 
@@ -53,7 +57,7 @@
     const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
     const CHANNEL_ID = "-1003754232314";
     
-    // උඹේ අලුත්ම Google Web App URL එක මෙතනට දාපං
+    // උඹේ ස්ක්‍රිප්ට් URL එක මෙතනට දැම්මා
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwmgiARApa_Q5QZbRydQ4v74RCLAU0R2Fdjz4IvXjT0E82_ny71a5f6yxn6B3_wp-TP/exec"; 
 
     // --- 1. UPLOAD FUNCTION ---
@@ -73,7 +77,7 @@
         status.innerHTML = "";
 
         try {
-            // පළමුව වීඩියෝ එක Telegram Channel එකට Upload කරනවා
+            // වීඩියෝ එක Telegram Channel එකට යනවා
             const formData = new FormData();
             formData.append('chat_id', CHANNEL_ID);
             formData.append('video', fileInput.files[0]);
@@ -88,11 +92,10 @@
                 throw new Error("Telegram Upload Failed: " + tlData.description);
             }
 
-            // Telegram එකෙන් ලැබුන File ID එක ගන්නවා
             const telegramFileId = tlData.result.video.file_id;
             btn.innerText = "Saving to Google Sheet...";
 
-            // දෙවනුව දත්ත ටික Google Sheet එකට POST කරනවා (CORS ගැටලුවක් එන්නේ නැති ක්‍රමයට)
+            // දත්ත ටික Sheet එකට POST කරනවා
             const sheetResponse = await fetch(GAS_URL, {
                 method: 'POST',
                 body: JSON.stringify({ 
@@ -104,10 +107,10 @@
             const sheetResult = await sheetResponse.text();
 
             if (sheetResult === "Success") {
-                status.innerHTML = `<div class="success-msg">නියමයි! වීඩියෝ එක සාර්ථකව Upload වුණා සහ Sheet එකට වැටුණා.</div>`;
+                status.innerHTML = `<div class="success-msg">වීඩියෝ එක සාර්ථකව Upload වුණා!</div>`;
                 titleInput.value = "";
                 fileInput.value = "";
-                // අලුත් වීඩියෝ එකත් එක්ක List එක Refresh කරනවා
+                // ලැයිස්තුව Refresh කරනවා අලුත් වීඩියෝ එකත් එක්කම
                 loadVideoList();
             } else {
                 throw new Error("Google Sheet Error: " + sheetResult);
@@ -122,7 +125,7 @@
         }
     }
 
-    // --- 2. LIST LOADING FUNCTION ---
+    // --- 2. LIST LOADING & PLAYBACK FUNCTION ---
     async function loadVideoList() {
         const container = document.getElementById('listContainer');
         const loadingText = document.getElementById('loading');
@@ -131,7 +134,7 @@
         container.innerHTML = "";
         
         try {
-            // Google Sheet එකේ තියෙන පරණ සහ අලුත් ඔක්කොම දත්ත Fetch කරනවා
+            // Google Sheet එකෙන් ඔක්කොම දත්ත ගන්නවා
             const response = await fetch(GAS_URL);
             const result = await response.json();
             
@@ -147,14 +150,20 @@
                 return;
             }
 
-            // හැම වීඩියෝ එකක්ම පිළිවෙලට පෙන්වනවා
-            result.forEach(v => {
-                container.innerHTML += `
-                    <div class="video-item">
-                        <div class="video-title">🎬 ${v.title}</div>
-                        <div>ID: <span class="video-id">${v.fileID}</span></div>
+            // හැම වීඩියෝ එකකටම Element එක බැගින් හදනවා (ලෝඩ් වෙන්න ලේසි වෙන්න)
+            result.forEach((v, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'video-item';
+                itemDiv.innerHTML = `
+                    <div class="video-title">🎬 ${v.title}</div>
+                    <div id="player-container-${index}">
+                        <p class="video-status" id="status-${index}">වීඩියෝව සූදානම් කරමින් පවතී...</p>
                     </div>
                 `;
+                container.appendChild(itemDiv);
+
+                // හැම වීඩියෝ ID එකක්ම Telegram එකෙන් Stream URL එකට හරවන Function එකට යවනවා
+                streamTelegramVideo(v.fileID, index);
             });
 
         } catch (error) {
@@ -164,7 +173,35 @@
         }
     }
 
-    // සයිට් එක ලෝඩ් වෙනකොටම දැනට තියෙන දත්ත ටික ලෝඩ් කරනවා
+    // Telegram ID එකෙන් Video File Path එක අරන් කෙලින්ම Player එකට දාන Function එක
+    async function streamTelegramVideo(fileId, index) {
+        const playerContainer = document.getElementById(`player-container-${index}`);
+        const statusText = document.getElementById(`status-${index}`);
+        
+        try {
+            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+            const data = await res.json();
+
+            if (data.ok) {
+                const filePath = data.result.file_path;
+                const videoUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
+                
+                // Loading Text එක අයින් කරලා වීඩියෝ ප්ලේයර් එක දානවා
+                playerContainer.innerHTML = `
+                    <video src="${videoUrl}" controls preload="metadata"></video>
+                `;
+            } else {
+                statusText.innerText = "Error: වීඩියෝව Load කිරීමට නොහැක (" + data.description + ")";
+                statusText.style.color = "red";
+            }
+        } catch (err) {
+            statusText.innerText = "Error: සර්වර් සම්බන්ධතාව බිඳ වැටුණි.";
+            statusText.style.color = "red";
+            console.error(err);
+        }
+    }
+
+    // පිටුව ලෝඩ් වෙනකොටම Function එක රන් කරනවා
     loadVideoList();
 </script>
 
