@@ -3,69 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video ID List</title>
+    <title>Video Hub - Upload & List</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
-        h2 { color: #444; }
-        .list-container { max-width: 600px; margin-top: 20px; }
-        .video-item { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .video-title { font-weight: bold; font-size: 1.1em; color: #007bff; }
-        .video-id { font-family: monospace; background: #eee; padding: 3px 6px; border-radius: 3px; font-size: 0.9em; display: inline-block; margin-top: 5px; word-break: break-all; }
-        #loading { font-style: italic; color: #666; }
-        .error-msg { color: red; font-weight: bold; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        h2 { margin-top: 0; color: #444; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .video-item { background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #007bff; }
+        .video-title { font-weight: bold; font-size: 1.1em; color: #333; }
+        .video-id { font-family: monospace; background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; display: inline-block; margin-top: 5px; word-break: break-all; color: #555; }
+        #loading { font-style: italic; color: #666; text-align: center; }
+        .error-msg { color: #dc3545; font-weight: bold; padding: 10px; background: #f8d7da; border-radius: 4px; margin-top: 10px; }
+        .success-msg { color: #28a745; font-weight: bold; padding: 10px; background: #d4edda; border-radius: 4px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>Google Sheet - Video ID List</h2>
-    <div id="loading">දත්ත ලෝඩ් වෙමින් පවතී... (Loading...)</div>
-    <div id="listContainer" class="list-container"></div>
+<div class="container">
 
-    <script>
-        // උඹේ අලුත්ම Web App URL එක මෙතනට දාපං
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby-il2l6fjwLjoeTppk8us3hjmHMNtoTqAPF3QNcxCj2pQeHecZVb7vDioG-0rVd0cZ/exec"; 
+    <div class="card">
+        <h2>Upload New Video</h2>
+        <div class="form-group">
+            <label for="title">Video Title</label>
+            <input type="text" id="title" placeholder="වීඩියෝ එකට නමක් දෙන්න...">
+        </div>
+        <div class="form-group">
+            <label for="videoFile">Select Video</label>
+            <input type="file" id="videoFile" accept="video/*">
+        </div>
+        <button id="upBtn" onclick="uploadVideo()">Upload Video</button>
+        <div id="statusMessage"></div>
+    </div>
 
-        async function loadVideoList() {
-            const container = document.getElementById('listContainer');
-            const loadingText = document.getElementById('loading');
-            
-            try {
-                // කෙලින්ම Google එකෙන් Data ඉල්ලනවා
-                const response = await fetch(GAS_URL);
-                const result = await response.json();
-                
-                loadingText.style.display = "none";
-                container.innerHTML = "";
+    <div class="card">
+        <h2>Google Sheet - Video ID List</h2>
+        <div id="loading">දත්ත ලෝඩ් වෙමින් පවතී... (Loading...)</div>
+        <div id="listContainer"></div>
+    </div>
 
-                // Google Script එකෙන් Error එකක් ආවොත් ඒක පෙන්නන්න
-                if (result.error) {
-                    container.innerHTML = `<div class="error-msg">Backend Error: ${result.error}</div>`;
-                    return;
-                }
+</div>
 
-                if(result.length === 0) {
-                    container.innerHTML = "<div>කිසිදු වීඩියෝවක් හමුනොවීය.</div>";
-                    return;
-                }
+<script>
+    // Telegram Configuration
+    const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
+    const CHANNEL_ID = "-1003754232314";
+    
+    // උඹේ අලුත්ම Google Web App URL එක මෙතනට දාපං
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwmgiARApa_Q5QZbRydQ4v74RCLAU0R2Fdjz4IvXjT0E82_ny71a5f6yxn6B3_wp-TP/exec"; 
 
-                // Data ටික List කරනවා
-                result.forEach(v => {
-                    container.innerHTML += `
-                        <div class="video-item">
-                            <div class="video-title">🎬 ${v.title}</div>
-                            <div>ID: <span class="video-id">${v.fileID}</span></div>
-                        </div>
-                    `;
-                });
+    // --- 1. UPLOAD FUNCTION ---
+    async function uploadVideo() {
+        const fileInput = document.getElementById('videoFile');
+        const titleInput = document.getElementById('title');
+        const btn = document.getElementById('upBtn');
+        const status = document.getElementById('statusMessage');
 
-            } catch (error) {
-                loadingText.innerText = "Error එකක් ආවා!";
-                container.innerHTML = `<div class="error-msg">Fetch Error: ${error.message}</div>`;
-                console.error("Fetch Error:", error);
-            }
+        if (!titleInput.value.trim() || !fileInput.files[0]) {
+            alert("කරුණාකර Title එක සහ Video File එක ඇතුලත් කරන්න!");
+            return;
         }
 
-        loadVideoList();
-    </script>
+        btn.innerText = "Uploading to Telegram...";
+        btn.disabled = true;
+        status.innerHTML = "";
+
+        try {
+            // පළමුව වීඩියෝ එක Telegram Channel එකට Upload කරනවා
+            const formData = new FormData();
+            formData.append('chat_id', CHANNEL_ID);
+            formData.append('video', fileInput.files[0]);
+
+            const tlResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { 
+                method: 'POST', 
+                body: formData 
+            });
+            const tlData = await tlResponse.json();
+
+            if (!tlData.ok) {
+                throw new Error("Telegram Upload Failed: " + tlData.description);
+            }
+
+            // Telegram එකෙන් ලැබුන File ID එක ගන්නවා
+            const telegramFileId = tlData.result.video.file_id;
+            btn.innerText = "Saving to Google Sheet...";
+
+            // දෙවනුව දත්ත ටික Google Sheet එකට POST කරනවා (CORS ගැටලුවක් එන්නේ නැති ක්‍රමයට)
+            const sheetResponse = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    title: titleInput.value.trim(), 
+                    fileID: telegramFileId 
+                })
+            });
+
+            const sheetResult = await sheetResponse.text();
+
+            if (sheetResult === "Success") {
+                status.innerHTML = `<div class="success-msg">නියමයි! වීඩියෝ එක සාර්ථකව Upload වුණා සහ Sheet එකට වැටුණා.</div>`;
+                titleInput.value = "";
+                fileInput.value = "";
+                // අලුත් වීඩියෝ එකත් එක්ක List එක Refresh කරනවා
+                loadVideoList();
+            } else {
+                throw new Error("Google Sheet Error: " + sheetResult);
+            }
+
+        } catch (error) {
+            status.innerHTML = `<div class="error-msg">Error: ${error.message}</div>`;
+            console.error(error);
+        } finally {
+            btn.innerText = "Upload Video";
+            btn.disabled = false;
+        }
+    }
+
+    // --- 2. LIST LOADING FUNCTION ---
+    async function loadVideoList() {
+        const container = document.getElementById('listContainer');
+        const loadingText = document.getElementById('loading');
+        
+        loadingText.style.display = "block";
+        container.innerHTML = "";
+        
+        try {
+            // Google Sheet එකේ තියෙන පරණ සහ අලුත් ඔක්කොම දත්ත Fetch කරනවා
+            const response = await fetch(GAS_URL);
+            const result = await response.json();
+            
+            loadingText.style.display = "none";
+
+            if (result.error) {
+                container.innerHTML = `<div class="error-msg">Backend Error: ${result.error}</div>`;
+                return;
+            }
+
+            if (result.length === 0) {
+                container.innerHTML = "<div>කිසිදු වීඩියෝවක් හමුනොවීය.</div>";
+                return;
+            }
+
+            // හැම වීඩියෝ එකක්ම පිළිවෙලට පෙන්වනවා
+            result.forEach(v => {
+                container.innerHTML += `
+                    <div class="video-item">
+                        <div class="video-title">🎬 ${v.title}</div>
+                        <div>ID: <span class="video-id">${v.fileID}</span></div>
+                    </div>
+                `;
+            });
+
+        } catch (error) {
+            loadingText.style.display = "none";
+            container.innerHTML = `<div class="error-msg">Fetch Error: ${error.message}</div>`;
+            console.error("Fetch Error:", error);
+        }
+    }
+
+    // සයිට් එක ලෝඩ් වෙනකොටම දැනට තියෙන දත්ත ටික ලෝඩ් කරනවා
+    loadVideoList();
+</script>
+
 </body>
 </html>
