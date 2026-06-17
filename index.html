@@ -2,60 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Uploader</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
-        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
-        input { margin: 20px 0; display: block; margin-left: auto; margin-right: auto; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        #status { margin-top: 20px; word-break: break-all; }
+        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; }
+        .box { border: 1px solid #ccc; padding: 20px; border-radius: 8px; width: 300px; text-align: center; }
+        button { margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
+    <div class="box">
+        <h1>Video Uploader</h1>
+        <input type="file" id="fileInput">
+        <br>
+        <button onclick="uploadFile()">Upload Now</button>
+        <div id="status" style="margin-top: 15px; word-break: break-all;"></div>
+    </div>
 
-<div class="container">
-    <h2>Video Uploader</h2>
-    <input type="file" id="fileInput" accept="video/*">
-    <button onclick="uploadVideo()">Upload Now</button>
-    <div id="status"></div>
-</div>
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const status = document.getElementById('status');
+            const file = fileInput.files[0];
 
-<script>
-    async function uploadVideo() {
-        const fileInput = document.getElementById('fileInput');
-        const status = document.getElementById('status');
-
-        if (!fileInput.files[0]) {
-            status.innerText = "Please select a video file first.";
-            return;
-        }
-
-        const file = fileInput.files[0];
-        status.innerText = "Uploading... Please wait.";
-
-        const formData = new FormData();
-        formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', file);
-
-        try {
-            // මෙතනදී '/upload' වෙත යවන්නේ Cloudflare Functions මගින් CORS error එක මග හැරීමටයි
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.text();
-            
-            if (response.ok) {
-                status.innerHTML = `Upload successful!<br><br>Link: <a href="${result}" target="_blank">${result}</a>`;
-            } else {
-                status.innerText = "Error: " + result;
+            if (!file) {
+                status.innerText = "Please select a file first!";
+                return;
             }
-        } catch (error) {
-            status.innerText = "Error: " + error.message;
+
+            status.innerText = "Uploading, please wait...";
+
+            // Catbox API එකට අවශ්‍ය දත්ත එකතු කරගන්නවා
+            const formData = new FormData();
+            formData.append('reqtype', 'fileupload');
+            formData.append('fileToUpload', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+
+                if (response.ok) {
+                    status.innerHTML = `Upload successful!<br><br>Link: <br><a href="${result}" target="_blank">${result}</a>`;
+                } else {
+                    status.innerText = "Error: " + result;
+                }
+            } catch (error) {
+                status.innerText = "Upload failed. Check console for details.";
+                console.error(error);
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
