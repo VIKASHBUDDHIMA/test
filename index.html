@@ -28,7 +28,7 @@
 
     <script>
         const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
-        const CHANNEL_ID = "-1003754232314"; 
+        const CHANNEL_ID = "-1003754232314";
         const GAS_URL = "https://script.google.com/macros/s/AKfycby2_Lgl31OJQxeqE5umWcq-K4ClvaFMGlTgQseAEkcd8Csv0awRrsTTlaINBgI9unM7/exec";
 
         async function uploadVideo() {
@@ -44,36 +44,36 @@
             formData.append('video', file);
 
             try {
-                const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, {
-                    method: 'POST', body: formData
-                });
+                const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: formData });
                 const data = await resp.json();
 
                 if(data.ok) {
                     document.getElementById('status').innerText = "Saving to database...";
-                    // මෙතන no-cors දාන්න පුළුවන් (POST නිසා)
                     await fetch(GAS_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
+                        mode: 'cors',
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
                     });
                     alert("Upload Success!");
                     location.reload();
+                } else {
+                    alert("Error: " + data.description);
                 }
             } catch (err) {
-                alert("Upload failed.");
                 console.error(err);
+                alert("Upload failed.");
             }
             document.getElementById('upBtn').disabled = false;
         }
 
         async function loadVideos() {
             try {
-                // මෙතන no-cors දාන්න එපා. standard fetch එක පාවිච්චි කරන්න.
-                const resp = await fetch(GAS_URL);
+                // මෙතන mode: 'cors' එක අනිවාර්යයි
+                const resp = await fetch(GAS_URL, { mode: 'cors' });
                 const videos = await resp.json();
                 const container = document.getElementById('videoContainer');
+                container.innerHTML = "<h3>Uploaded Videos</h3>";
                 
                 for(let v of videos) {
                     const pathResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
@@ -89,8 +89,8 @@
                     }
                 }
             } catch (e) {
-                console.log("Load failed:", e);
-                document.getElementById('videoContainer').innerHTML = "<p>Could not load videos.</p>";
+                console.error("Load failed:", e);
+                document.getElementById('videoContainer').innerHTML = "<p>Could not load videos. Please check console.</p>";
             }
         }
         loadVideos();
