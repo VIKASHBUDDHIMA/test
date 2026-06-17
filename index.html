@@ -2,28 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Hub</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .video-item { background: white; padding: 15px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        video { width: 100%; border-radius: 5px; margin-top: 10px; }
-        #status { color: #555; text-align: center; margin-top: 10px; }
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        .video-item { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
+        video { width: 100%; }
     </style>
 </head>
 <body>
-
-    <div class="card">
-        <h2>Video Uploader</h2>
-        <input type="text" id="title" placeholder="Video Title">
-        <input type="file" id="videoFile" accept="video/*">
-        <button id="upBtn" onclick="uploadVideo()">Upload</button>
-        <p id="status"></p>
-    </div>
-
+    <h2>Video Uploader</h2>
+    <input type="text" id="title" placeholder="Video Title">
+    <input type="file" id="videoFile" accept="video/*">
+    <button onclick="uploadVideo()">Upload</button>
     <div id="videoContainer"></div>
 
     <script>
@@ -34,48 +24,32 @@
         async function uploadVideo() {
             const file = document.getElementById('videoFile').files[0];
             const title = document.getElementById('title').value;
-            if(!file || !title) return alert("Enter Title and File");
-
-            document.getElementById('upBtn').disabled = true;
-            document.getElementById('status').innerText = "Uploading to Telegram...";
-
             const formData = new FormData();
             formData.append('chat_id', CHANNEL_ID);
             formData.append('video', file);
 
-            try {
-                const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: formData });
-                const data = await resp.json();
+            const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: formData });
+            const data = await resp.json();
 
-                if(data.ok) {
-                    document.getElementById('status').innerText = "Saving to database...";
-                    await fetch(GAS_URL, {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
-                    });
-                    alert("Upload Success!");
-                    location.reload();
-                } else {
-                    alert("Error: " + data.description);
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Upload failed.");
+            if(data.ok) {
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
+                });
+                alert("Upload Success!");
+                location.reload();
             }
-            document.getElementById('upBtn').disabled = false;
         }
 
         async function loadVideos() {
             try {
-                // මෙතන mode: 'cors' එක අනිවාර්යයි
-                const resp = await fetch(GAS_URL, { mode: 'cors' });
+                // CORS වලට විසදුම: 'no-cors' වෙනුවට කෙලින්ම fetch කරන එක
+                const resp = await fetch(GAS_URL);
                 const videos = await resp.json();
                 const container = document.getElementById('videoContainer');
-                container.innerHTML = "<h3>Uploaded Videos</h3>";
                 
                 for(let v of videos) {
+                    // Telegram API එකෙන් file path එක ගන්නවා
                     const pathResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
                     const pathData = await pathResp.json();
                     
@@ -89,8 +63,7 @@
                     }
                 }
             } catch (e) {
-                console.error("Load failed:", e);
-                document.getElementById('videoContainer').innerHTML = "<p>Could not load videos. Please check console.</p>";
+                document.getElementById('videoContainer').innerHTML = "Error loading videos: " + e.message;
             }
         }
         loadVideos();
