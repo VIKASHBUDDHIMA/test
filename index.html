@@ -1,46 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Video Gallery</title>
+    <title>Video Hub</title>
 </head>
 <body>
-    <div id="videoContainer">Loading videos...</div>
+    <h2>Upload Video</h2>
+    <input type="text" id="title" placeholder="Title">
+    <input type="file" id="videoFile" accept="video/*">
+    <button id="upBtn" onclick="upload()">Upload</button>
+    <div id="videoContainer">Loading...</div>
 
     <script>
         const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
-        // අලුතින් Deploy කරලා ගත්ත URL එක මෙතනට දාන්න
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby2_Lgl31OJQxeqE5umWcq-K4ClvaFMGlTgQseAEkcd8Csv0awRrsTTlaINBgI9unM7/exec";
+        const CHANNEL_ID = "-1003754232314";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycby2_Lgl31OJQxeqE5umWcq-K4ClvaFMGlTgQseAEkcd8Csv0awRrsTTlaINBgI9unM7/exec"; // මෙතනට අලුත් URL එක දාන්න!
 
-        async function loadVideos() {
+        async function upload() {
+            const file = document.getElementById('videoFile').files[0];
+            const title = document.getElementById('title').value;
+            const btn = document.getElementById('upBtn');
+            
+            btn.innerText = "Uploading...";
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('chat_id', CHANNEL_ID);
+            formData.append('video', file);
+
+            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.ok) {
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
+                });
+                alert("Success!");
+                location.reload();
+            } else {
+                alert("Error: " + data.description);
+            }
+            btn.innerText = "Upload";
+            btn.disabled = false;
+        }
+
+        async function load() {
+            const res = await fetch(GAS_URL);
+            const videos = await res.json();
             const container = document.getElementById('videoContainer');
-            try {
-                // 1. Google Sheet එකෙන් දත්ත ගන්නවා
-                const response = await fetch(GAS_URL);
-                const videos = await response.json();
-                
-                container.innerHTML = ""; // clear loading text
+            container.innerHTML = "";
 
-                for (let v of videos) {
-                    // 2. Telegram API එක හරහා fileID එකෙන් direct link එකක් ගන්නවා
-                    const pathResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
-                    const pathData = await pathResp.json();
-                    
-                    if (pathData.ok) {
-                        const videoURL = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
-                        container.innerHTML += `
-                            <div style="margin-bottom:20px;">
-                                <h3>${v.title}</h3>
-                                <video width="320" height="240" controls>
-                                    <source src="${videoURL}" type="video/mp4">
-                                </video>
-                            </div>`;
-                    }
+            for (let v of videos) {
+                const pathRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
+                const pathData = await pathRes.json();
+                if (pathData.ok) {
+                    const url = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
+                    container.innerHTML += `<div><h3>${v.title}</h3><video src="${url}" controls width="300"></video></div>`;
                 }
-            } catch (error) {
-                container.innerHTML = "Error: " + error.message;
             }
         }
-        loadVideos();
+        load();
     </script>
 </body>
 </html>
