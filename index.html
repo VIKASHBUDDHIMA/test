@@ -1,65 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="si">
 <head>
-    <title>Video Hub</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Video Player</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; font-family: sans-serif; }
+        .container { text-align: center; }
+        video { border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    </style>
 </head>
 <body>
-    <h2>Upload Video</h2>
-    <input type="text" id="title" placeholder="Title">
-    <input type="file" id="videoFile" accept="video/*">
-    <button id="upBtn" onclick="upload()">Upload</button>
-    <div id="videoContainer">Loading...</div>
 
-    <script>
-        const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
-        const CHANNEL_ID = "-1003754232314";
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby2_Lgl31OJQxeqE5umWcq-K4ClvaFMGlTgQseAEkcd8Csv0awRrsTTlaINBgI9unM7/exec"; // මෙතනට අලුත් URL එක දාන්න!
+<div class="container">
+    <h2>Video Player</h2>
+    <video id="telegramVideo" width="640" height="360" controls>
+        ඔබේ බ්‍රවුසරය වීඩියෝව ප්ලේ කිරීමට සහය නොදක්වයි.
+    </video>
+    <p id="status">වීඩියෝව Load වෙමින් පවතී...</p>
+</div>
 
-        async function upload() {
-            const file = document.getElementById('videoFile').files[0];
-            const title = document.getElementById('title').value;
-            const btn = document.getElementById('upBtn');
-            
-            btn.innerText = "Uploading...";
-            btn.disabled = true;
+<script>
+    // ඔබේ තොරතුරු මෙතැනට ඇතුලත් කරන්න
+    const BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"; // මෙතනට ඔබේ Bot Token එක දමන්න
+    const FILE_ID = "BAACAgUAAyEGAATfxQn6AAMJajJnxSHe2wABEhMxjXr03q4-SFhIAAIQIAACygaQVRjV1L38gcqKPAQ";
 
-            const formData = new FormData();
-            formData.append('chat_id', CHANNEL_ID);
-            formData.append('video', file);
+    async function loadVideo() {
+        const status = document.getElementById("status");
+        const video = document.getElementById("telegramVideo");
 
-            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: formData });
-            const data = await res.json();
+        try {
+            // 1. Telegram API හරහා file_path ලබා ගැනීම
+            const response = await fetch(`https://api.telegram.org/bot${8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q}/getFile?file_id=${FILE_ID}`);
+            const data = await response.json();
 
             if (data.ok) {
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
-                });
-                alert("Success!");
-                location.reload();
+                const filePath = data.result.file_path;
+                // 2. සෘජු ලිපිනය සැකසීම
+                const videoUrl = `https://api.telegram.org/file/bot${8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q}/${filePath}`;
+                
+                // 3. වීඩියෝ එක ප්ලේ කිරීම
+                video.src = videoUrl;
+                status.innerText = "වීඩියෝව සූදානම්!";
             } else {
-                alert("Error: " + data.description);
+                status.innerText = "දෝෂයක් සිදුවිය: " + data.description;
             }
-            btn.innerText = "Upload";
-            btn.disabled = false;
+        } catch (error) {
+            status.innerText = "Error: සම්බන්ධ වීමට නොහැක.";
+            console.error(error);
         }
+    }
 
-        async function load() {
-            const res = await fetch(GAS_URL);
-            const videos = await res.json();
-            const container = document.getElementById('videoContainer');
-            container.innerHTML = "";
+    loadVideo();
+</script>
 
-            for (let v of videos) {
-                const pathRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
-                const pathData = await pathRes.json();
-                if (pathData.ok) {
-                    const url = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
-                    container.innerHTML += `<div><h3>${v.title}</h3><video src="${url}" controls width="300"></video></div>`;
-                }
-            }
-        }
-        load();
-    </script>
 </body>
 </html>
