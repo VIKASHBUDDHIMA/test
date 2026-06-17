@@ -1,23 +1,23 @@
 export async function onRequestPost({ request }) {
-    try {
-        // Form එකෙන් එන දත්ත අරගන්නවා
-        const formData = await request.formData();
+  try {
+    // request එකේ තියෙන body එක කෙලින්ම forward කරනවා
+    const response = await fetch('https://catbox.moe/user/api.php', {
+      method: 'POST',
+      body: request.body, 
+      headers: request.headers
+    });
 
-        // Catbox API එකට request එක යවනවා
-        const response = await fetch('https://catbox.moe/user/api.php', {
-            method: 'POST',
-            body: formData
-        });
+    const result = await response.text();
 
-        // Catbox එකෙන් එන result එක අරගන්නවා (මේකේ තියෙන්නේ සාර්ථක වුණොත් link එක)
-        const result = await response.text();
-
-        // ලැබෙන ප්‍රතිචාරය Browser එකට යවනවා
-        return new Response(result, {
-            status: response.status,
-            headers: { 'Content-Type': 'text/plain' }
-        });
-    } catch (e) {
-        return new Response('Error: ' + e.message, { status: 500 });
-    }
+    return new Response(result, {
+      status: response.status,
+      headers: { 
+        'Content-Type': 'text/plain',
+        'Access-Control-Allow-Origin': '*' // CORS ප්‍රශ්න නැති වෙන්න
+      }
+    });
+  } catch (err) {
+    // මොකක් හරි error එකක් ආවොත් ඒක පෙන්වන්න
+    return new Response('Error: ' + err.message, { status: 500 });
+  }
 }
