@@ -1,19 +1,20 @@
-export async function onRequestPost(context) {
-    const { request } = context;
+export async function onRequestPost({ request }) {
     try {
+        // Form එකෙන් එන දත්ත අරගන්නවා
         const formData = await request.formData();
-        
-        // Catbox API වෙත පරීක්ෂණයක් (Proxy request) සිදු කිරීම
+
+        // Catbox API එකට request එක යවනවා
         const response = await fetch('https://catbox.moe/user/api.php', {
             method: 'POST',
             body: formData
         });
 
+        // Catbox එකෙන් එන result එක අරගන්නවා (මේකේ තියෙන්නේ සාර්ථක වුණොත් link එක)
         const result = await response.text();
-        
-        // ලැබුණු ප්‍රතිඵලය නැවත Browser එකට යැවීම
+
+        // ලැබෙන ප්‍රතිචාරය Browser එකට යවනවා
         return new Response(result, {
-            status: 200,
+            status: response.status,
             headers: { 'Content-Type': 'text/plain' }
         });
     } catch (e) {
