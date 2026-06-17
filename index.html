@@ -1,63 +1,88 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Video Uploader</title>
-</head>
 <body>
     <h2>Upload Video</h2>
     <input type="text" id="title" placeholder="Video Title">
     <input type="file" id="videoFile">
-    <button onclick="uploadVideo()">Upload</button>
+    <button id="upBtn" onclick="uploadVideo()">Upload</button>
+    
+    <p id="status"></p> 
+    
     <hr>
     <div id="videoContainer"></div>
 
     <script>
-        const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
-        const CHANNEL_ID = "-1003754232314"; // ඔයාගේ ID එක
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwPL6EVP40D0xyEsbmE9DWLlUpVAD35w9dparrrAQYrosAZEa_70ckO1aBnR8Vbovx5/exec";
+        const BOT_TOKEN = "ඔයාගේ_TOKEN_එක";
+        const CHANNEL_ID = "-100xxxx";
+        const GAS_URL = "ඔයාගේ_GAS_URL_එක";
+
+        function setStatus(msg) {
+            document.getElementById('status').innerText = msg;
+        }
 
         async function uploadVideo() {
+            const btn = document.getElementById('upBtn');
             const file = document.getElementById('videoFile').files[0];
             const title = document.getElementById('title').value;
-            const formData = new FormData();
-            formData.append('chat_id', CHANNEL_ID);
-            formData.append('video', file);
 
-            // 1. Telegram එකට upload කිරීම
-            const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, {
-                method: 'POST',
-                body: formData
-            });
-            const data = await resp.json();
-            
-            if(data.ok) {
-                // 2. Google Sheet එකට දත්ත යැවීම
+            if(!file || !title) { alert("Title සහ File එක දෙන්න!"); return; }
+
+            btn.disabled = true;
+            setStatus("Uploading to Telegram... කරුණාකර රැඳී සිටින්න.");
+
+            try {
+                const formData = new FormData();
+                formData.append('chat_id', CHANNEL_ID);
+                formData.append('video', file);
+
+                const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await resp.json();
+
+                if(!data.ok) throw new Error("Telegram Upload Error: " + data.description);
+
+                setStatus("Telegram Upload සාර්ථකයි! Database එකට යවනවා...");
+
                 await fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
                 });
-                alert("Upload සාර්ථකයි!");
-                location.reload();
+
+                setStatus("සියල්ල සාර්ථකයි! Refresh වේ...");
+                location.reload(); // page එක reload කරලා අලුත් වීඩියෝ එක පෙන්නනවා
+
+            } catch (err) {
+                console.error(err);
+                setStatus("Error එකක් ආවා: " + err.message);
+                btn.disabled = false;
             }
         }
 
-        // 3. වීඩියෝ ලැයිස්තුව පෙන්වීම
         async function loadVideos() {
-            const resp = await fetch(GAS_URL);
-            const videos = await resp.json();
-            const container = document.getElementById('videoContainer');
-            
-            for(let v of videos) {
-                // Telegram file link ලබා ගැනීම
-                const pathResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
-                const pathData = await pathResp.json();
-                const videoURL = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
-
-                container.innerHTML += `
-                    <div>
-                        <h3>${v.title}</h3>
-                        <video src="${videoURL}" controls width="400"></video>
-                    </div>`;
+            try {
+                const resp = await fetch(GAS_URL);
+                const videos = await resp.json();
+                const container = document.getElementById('videoContainer');
+                container.innerHTML = ""; // පරණ ඒවා අයින් කරනවා
+                
+                for(let v of videos) {
+                    // Telegram එකෙන් link එක ගන්න උත්සාහ කිරීම
+                    const pathResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
+                    const pathData = await pathResp.json();
+                    
+                    if(pathData.ok) {
+                        const videoURL = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
+                        container.innerHTML += `
+                            <div>
+                                <h3>${v.title}</h3>
+                                <video src="${videoURL}" controls width="400"></video>
+                            </div>`;
+                    }
+                }
+            } catch (e) {
+                console.error("Loading Error:", e);
             }
         }
         loadVideos();
