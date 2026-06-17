@@ -1,69 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Video Hub</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-        .video-item { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
-        video { width: 100%; }
-    </style>
+    <title>Video Gallery</title>
 </head>
 <body>
-    <h2>Video Uploader</h2>
-    <input type="text" id="title" placeholder="Video Title">
-    <input type="file" id="videoFile" accept="video/*">
-    <button onclick="uploadVideo()">Upload</button>
-    <div id="videoContainer"></div>
+    <div id="videoContainer">Loading videos...</div>
 
     <script>
         const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
-        const CHANNEL_ID = "-1003754232314";
+        // අලුතින් Deploy කරලා ගත්ත URL එක මෙතනට දාන්න
         const GAS_URL = "https://script.google.com/macros/s/AKfycby2_Lgl31OJQxeqE5umWcq-K4ClvaFMGlTgQseAEkcd8Csv0awRrsTTlaINBgI9unM7/exec";
 
-        async function uploadVideo() {
-            const file = document.getElementById('videoFile').files[0];
-            const title = document.getElementById('title').value;
-            const formData = new FormData();
-            formData.append('chat_id', CHANNEL_ID);
-            formData.append('video', file);
-
-            const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { method: 'POST', body: formData });
-            const data = await resp.json();
-
-            if(data.ok) {
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
-                });
-                alert("Upload Success!");
-                location.reload();
-            }
-        }
-
         async function loadVideos() {
+            const container = document.getElementById('videoContainer');
             try {
-                // CORS වලට විසදුම: 'no-cors' වෙනුවට කෙලින්ම fetch කරන එක
-                const resp = await fetch(GAS_URL);
-                const videos = await resp.json();
-                const container = document.getElementById('videoContainer');
+                // 1. Google Sheet එකෙන් දත්ත ගන්නවා
+                const response = await fetch(GAS_URL);
+                const videos = await response.json();
                 
-                for(let v of videos) {
-                    // Telegram API එකෙන් file path එක ගන්නවා
+                container.innerHTML = ""; // clear loading text
+
+                for (let v of videos) {
+                    // 2. Telegram API එක හරහා fileID එකෙන් direct link එකක් ගන්නවා
                     const pathResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
                     const pathData = await pathResp.json();
                     
-                    if(pathData.ok) {
+                    if (pathData.ok) {
                         const videoURL = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
                         container.innerHTML += `
-                            <div class="video-item">
-                                <strong>${v.title}</strong>
-                                <video src="${videoURL}" controls></video>
+                            <div style="margin-bottom:20px;">
+                                <h3>${v.title}</h3>
+                                <video width="320" height="240" controls>
+                                    <source src="${videoURL}" type="video/mp4">
+                                </video>
                             </div>`;
                     }
                 }
-            } catch (e) {
-                document.getElementById('videoContainer').innerHTML = "Error loading videos: " + e.message;
+            } catch (error) {
+                container.innerHTML = "Error: " + error.message;
             }
         }
         loadVideos();
