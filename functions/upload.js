@@ -1,23 +1,25 @@
 export async function onRequestPost({ request }) {
-  try {
-    // request එකේ තියෙන body එක කෙලින්ම forward කරනවා
-    const response = await fetch('https://catbox.moe/user/api.php', {
-      method: 'POST',
-      body: request.body, 
-      headers: request.headers
-    });
+    try {
+        // Browser එකෙන් එන මුල්ම request එකේ headers අරගන්නවා (මේකේ තමයි Boundary එක තියෙන්නේ)
+        const contentType = request.headers.get("Content-Type");
 
-    const result = await response.text();
+        // Catbox API එකට request එක යවනවා
+        const response = await fetch('https://catbox.moe/user/api.php', {
+            method: 'POST',
+            body: request.body, // Request එකේ තියෙන file data එක කෙලින්ම යවනවා
+            headers: {
+                "Content-Type": contentType // මේ header එක අනිවාර්යයි
+            }
+        });
 
-    return new Response(result, {
-      status: response.status,
-      headers: { 
-        'Content-Type': 'text/plain',
-        'Access-Control-Allow-Origin': '*' // CORS ප්‍රශ්න නැති වෙන්න
-      }
-    });
-  } catch (err) {
-    // මොකක් හරි error එකක් ආවොත් ඒක පෙන්වන්න
-    return new Response('Error: ' + err.message, { status: 500 });
-  }
+        // Catbox එකෙන් එන result එක අරගන්නවා
+        const result = await response.text();
+
+        return new Response(result, {
+            status: response.status,
+            headers: { 'Content-Type': 'text/plain' }
+        });
+    } catch (e) {
+        return new Response('Error: ' + e.message, { status: 500 });
+    }
 }
