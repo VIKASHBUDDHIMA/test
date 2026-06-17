@@ -1,59 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Video Uploader</title>
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; }
-        .box { border: 1px solid #ccc; padding: 20px; border-radius: 8px; width: 300px; text-align: center; }
-        button { margin-top: 10px; cursor: pointer; }
-    </style>
 </head>
 <body>
-    <div class="box">
-        <h1>Video Uploader</h1>
-        <input type="file" id="fileInput">
-        <br>
-        <button onclick="uploadFile()">Upload Now</button>
-        <div id="status" style="margin-top: 15px; word-break: break-all;"></div>
-    </div>
+    <h2>Upload Video</h2>
+    <input type="text" id="title" placeholder="Video Title">
+    <input type="file" id="videoFile">
+    <button onclick="uploadVideo()">Upload</button>
+    <hr>
+    <div id="videoContainer"></div>
 
     <script>
-        async function uploadFile() {
-            const fileInput = document.getElementById('fileInput');
-            const status = document.getElementById('status');
-            const file = fileInput.files[0];
+        const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
+        const CHANNEL_ID = "-1003754232314"; // ඔයාගේ ID එක
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwPL6EVP40D0xyEsbmE9DWLlUpVAD35w9dparrrAQYrosAZEa_70ckO1aBnR8Vbovx5/exec";
 
-            if (!file) {
-                status.innerText = "Please select a file first!";
-                return;
-            }
-
-            status.innerText = "Uploading, please wait...";
-
-            // Catbox API එකට අවශ්‍ය දත්ත එකතු කරගන්නවා
+        async function uploadVideo() {
+            const file = document.getElementById('videoFile').files[0];
+            const title = document.getElementById('title').value;
             const formData = new FormData();
-            formData.append('reqtype', 'fileupload');
-            formData.append('fileToUpload', file);
+            formData.append('chat_id', CHANNEL_ID);
+            formData.append('video', file);
 
-            try {
-                const response = await fetch('/upload', {
+            // 1. Telegram එකට upload කිරීම
+            const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            
+            if(data.ok) {
+                // 2. Google Sheet එකට දත්ත යැවීම
+                await fetch(GAS_URL, {
                     method: 'POST',
-                    body: formData
+                    body: JSON.stringify({ title: title, fileID: data.result.video.file_id })
                 });
-
-                const result = await response.text();
-
-                if (response.ok) {
-                    status.innerHTML = `Upload successful!<br><br>Link: <br><a href="${result}" target="_blank">${result}</a>`;
-                } else {
-                    status.innerText = "Error: " + result;
-                }
-            } catch (error) {
-                status.innerText = "Upload failed. Check console for details.";
-                console.error(error);
+                alert("Upload සාර්ථකයි!");
+                location.reload();
             }
         }
+
+        // 3. වීඩියෝ ලැයිස්තුව පෙන්වීම
+        async function loadVideos() {
+            const resp = await fetch(GAS_URL);
+            const videos = await resp.json();
+            const container = document.getElementById('videoContainer');
+            
+            for(let v of videos) {
+                // Telegram file link ලබා ගැනීම
+                const pathResp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${v.fileID}`);
+                const pathData = await pathResp.json();
+                const videoURL = `https://api.telegram.org/file/bot${BOT_TOKEN}/${pathData.result.file_path}`;
+
+                container.innerHTML += `
+                    <div>
+                        <h3>${v.title}</h3>
+                        <video src="${videoURL}" controls width="400"></video>
+                    </div>`;
+            }
+        }
+        loadVideos();
     </script>
 </body>
 </html>
