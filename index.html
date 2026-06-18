@@ -3,207 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Hub - Stream & Upload</title>
+    <title>Telegram Video Portal</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 650px; margin: 0 auto; }
-        .card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        h2 { margin-top: 0; color: #444; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
-        button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        
-        /* Video Container Styles */
-        .video-item { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #007bff; }
-        .video-title { font-weight: bold; font-size: 1.1em; color: #333; margin-bottom: 10px; }
-        video { width: 100%; max-height: 360px; border-radius: 6px; background: #000; display: block; margin-top: 5px; }
-        
-        .video-status { font-style: italic; color: #666; font-size: 0.9em; padding: 10px; background: #f9f9f9; border-radius: 4px; text-align: center; }
-        #loading { font-style: italic; color: #666; text-align: center; font-size: 1.1em; }
-        .error-msg { color: #dc3545; font-weight: bold; padding: 10px; background: #f8d7da; border-radius: 4px; margin-top: 10px; }
-        .success-msg { color: #28a745; font-weight: bold; padding: 10px; background: #d4edda; border-radius: 4px; margin-top: 10px; }
+        body { font-family: sans-serif; background-color: #f4f6f9; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin-bottom: 20px; text-align: center; }
+        input, button { width: 90%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; }
+        button { background-color: #0088cc; color: white; cursor: pointer; border: none; font-weight: bold; }
+        .video-list { width: 100%; max-width: 600px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .video-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; font-weight: bold; }
+        .video-item:hover { background-color: #f0f0f0; }
+        video { width: 100%; border-radius: 8px; background: #000; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <h2>Video Player (Approved Only)</h2>
+    <video id="telegramVideo" controls></video>
+    <p id="playerStatus">වීඩියෝවක් තෝරන්න...</p>
+</div>
 
-    <div class="card">
-        <h2>Upload New Video</h2>
-        <div class="form-group">
-            <label for="title">Video Title</label>
-            <input type="text" id="title" placeholder="වීඩියෝ එකට නමක් දෙන්න...">
-        </div>
-        <div class="form-group">
-            <label for="videoFile">Select Video</label>
-            <input type="file" id="videoFile" accept="video/*">
-        </div>
-        <button id="upBtn" onclick="uploadVideo()">Upload Video</button>
-        <div id="statusMessage"></div>
-    </div>
+<div class="container">
+    <h3>Suggest a New Video</h3>
+    <input type="text" id="videoTitle" placeholder="Video Title එක ඇතුළත් කරන්න">
+    <input type="text" id="fileId" placeholder="Telegram File ID එක ඇතුළත් කරන්න">
+    <button onclick="submitVideo()">Submit for Approval</button>
+    <p id="uploadStatus"></p>
+</div>
 
-    <div class="card">
-        <h2>Google Sheet - Streaming Videos</h2>
-        <div id="loading">වීඩියෝ ලැයිස්තුව ලෝඩ් වෙමින් පවතී...</div>
-        <div id="listContainer"></div>
-    </div>
-
+<div class="video-list">
+    <h3>Available Videos</h3>
+    <div id="approvedContainer">Loading videos...</div>
 </div>
 
 <script>
-    // Telegram Configuration
-    const BOT_TOKEN = "8974378669:AAFyG7U1oClBLmZRda7rAKkl9xmwNG5ralc";
-    const CHANNEL_ID = "-1003754232314";
-    
-    // උඹේ ස්ක්‍රිප්ට් URL එක මෙතනට දැම්මා
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwmgiARApa_Q5QZbRydQ4v74RCLAU0R2Fdjz4IvXjT0E82_ny71a5f6yxn6B3_wp-TP/exec"; 
+    // ඔයාගේ තොරතුරු මෙතනට දාන්න
+    const API_URL = "https://script.google.com/macros/s/AKfycbwS1aNNbiAtmUaZKkUBg-9On60AY4R9eWARuIhyBsVSwpLqEHzMh9sRzDpqIfkqEtggRA/exec"; 
+    const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
 
-    // --- 1. UPLOAD FUNCTION ---
-    async function uploadVideo() {
-        const fileInput = document.getElementById('videoFile');
-        const titleInput = document.getElementById('title');
-        const btn = document.getElementById('upBtn');
-        const status = document.getElementById('statusMessage');
-
-        if (!titleInput.value.trim() || !fileInput.files[0]) {
-            alert("කරුණාකර Title එක සහ Video File එක ඇතුලත් කරන්න!");
-            return;
-        }
-
-        btn.innerText = "Uploading to Telegram...";
-        btn.disabled = true;
-        status.innerHTML = "";
-
+    // 1. Approve කරපු වීඩියෝ ටික විතරක් ෂීට් එකෙන් ලෝඩ් කරගැනීම
+    async function loadApprovedVideos() {
         try {
-            // වීඩියෝ එක Telegram Channel එකට යනවා
-            const formData = new FormData();
-            formData.append('chat_id', CHANNEL_ID);
-            formData.append('video', fileInput.files[0]);
+            const response = await fetch(`${API_URL}?action=getApproved`);
+            const data = await response.json();
+            const container = document.getElementById("approvedContainer");
+            container.innerHTML = "";
 
-            const tlResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, { 
-                method: 'POST', 
-                body: formData 
-            });
-            const tlData = await tlResponse.json();
-
-            if (!tlData.ok) {
-                throw new Error("Telegram Upload Failed: " + tlData.description);
+            if(data.length === 0) {
+                container.innerText = "තවම කිසිදු වීඩියෝවක් අනුමත කර නැත.";
+                return;
             }
 
-            const telegramFileId = tlData.result.video.file_id;
-            btn.innerText = "Saving to Google Sheet...";
-
-            // දත්ත ටික Sheet එකට POST කරනවා
-            const sheetResponse = await fetch(GAS_URL, {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    title: titleInput.value.trim(), 
-                    fileID: telegramFileId 
-                })
+            data.forEach(video => {
+                const div = document.createElement("div");
+                div.className = "video-item";
+                div.innerText = video.title;
+                div.onclick = () => playVideo(video.fileID, video.title);
+                container.appendChild(div);
             });
-
-            const sheetResult = await sheetResponse.text();
-
-            if (sheetResult === "Success") {
-                status.innerHTML = `<div class="success-msg">වීඩියෝ එක සාර්ථකව Upload වුණා!</div>`;
-                titleInput.value = "";
-                fileInput.value = "";
-                // ලැයිස්තුව Refresh කරනවා අලුත් වීඩියෝ එකත් එක්කම
-                loadVideoList();
-            } else {
-                throw new Error("Google Sheet Error: " + sheetResult);
-            }
-
         } catch (error) {
-            status.innerHTML = `<div class="error-msg">Error: ${error.message}</div>`;
             console.error(error);
-        } finally {
-            btn.innerText = "Upload Video";
-            btn.disabled = false;
         }
     }
 
-    // --- 2. LIST LOADING & PLAYBACK FUNCTION ---
-    async function loadVideoList() {
-        const container = document.getElementById('listContainer');
-        const loadingText = document.getElementById('loading');
-        
-        loadingText.style.display = "block";
-        container.innerHTML = "";
-        
+    // 2. තෝරාගත් වීඩියෝව ප්ලේ කිරීම
+    async function playVideo(fileId, title) {
+        const status = document.getElementById("playerStatus");
+        const video = document.getElementById("telegramVideo");
+        status.innerText = `Loading: ${title}...`;
+
         try {
-            // Google Sheet එකෙන් ඔක්කොම දත්ත ගන්නවා
-            const response = await fetch(GAS_URL);
-            const result = await response.json();
-            
-            loadingText.style.display = "none";
-
-            if (result.error) {
-                container.innerHTML = `<div class="error-msg">Backend Error: ${result.error}</div>`;
-                return;
-            }
-
-            if (result.length === 0) {
-                container.innerHTML = "<div>කිසිදු වීඩියෝවක් හමුනොවීය.</div>";
-                return;
-            }
-
-            // හැම වීඩියෝ එකකටම Element එක බැගින් හදනවා (ලෝඩ් වෙන්න ලේසි වෙන්න)
-            result.forEach((v, index) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'video-item';
-                itemDiv.innerHTML = `
-                    <div class="video-title">🎬 ${v.title}</div>
-                    <div id="player-container-${index}">
-                        <p class="video-status" id="status-${index}">වීඩියෝව සූදානම් කරමින් පවතී...</p>
-                    </div>
-                `;
-                container.appendChild(itemDiv);
-
-                // හැම වීඩියෝ ID එකක්ම Telegram එකෙන් Stream URL එකට හරවන Function එකට යවනවා
-                streamTelegramVideo(v.fileID, index);
-            });
-
-        } catch (error) {
-            loadingText.style.display = "none";
-            container.innerHTML = `<div class="error-msg">Fetch Error: ${error.message}</div>`;
-            console.error("Fetch Error:", error);
-        }
-    }
-
-    // Telegram ID එකෙන් Video File Path එක අරන් කෙලින්ම Player එකට දාන Function එක
-    async function streamTelegramVideo(fileId, index) {
-        const playerContainer = document.getElementById(`player-container-${index}`);
-        const statusText = document.getElementById(`status-${index}`);
-        
-        try {
-            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
-            const data = await res.json();
+            const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+            const data = await response.json();
 
             if (data.ok) {
                 const filePath = data.result.file_path;
-                const videoUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
-                
-                // Loading Text එක අයින් කරලා වීඩියෝ ප්ලේයර් එක දානවා
-                playerContainer.innerHTML = `
-                    <video src="${videoUrl}" controls preload="metadata"></video>
-                `;
+                video.src = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
+                status.innerText = `Playing: ${title}`;
+                video.play();
             } else {
-                statusText.innerText = "Error: වීඩියෝව Load කිරීමට නොහැක (" + data.description + ")";
-                statusText.style.color = "red";
+                status.innerText = "Error: වීඩියෝ ලින්ක් එක ලබාගත නොහැක.";
             }
-        } catch (err) {
-            statusText.innerText = "Error: සර්වර් සම්බන්ධතාව බිඳ වැටුණි.";
-            statusText.style.color = "red";
-            console.error(err);
+        } catch (error) {
+            status.innerText = "Error: Telegram සර්වර් එක සමඟ සම්බන්ධ විය නොහැක.";
         }
     }
 
-    // පිටුව ලෝඩ් වෙනකොටම Function එක රන් කරනවා
-    loadVideoList();
-</script>
+    // 3. වීඩියෝවක් Pending ලිස්ට් එකට යැවීම
+    async function submitVideo() {
+        const title = document.getElementById("videoTitle").value;
+        const fileId = document.getElementById("fileId").value;
+        const status = document.getElementById("uploadStatus");
 
+        if(!title || !fileId) {
+            status.innerText = "කරුණාකර සියලුම විස්තර පුරවන්න.";
+            return;
+        }
+
+        status.innerText = "යවමින් පවතී...";
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "upload", title: title, fileID: fileId })
+            });
+            const result = await response.text();
+            status.innerText = "සාර්ථකව ඉදිරිපත් කර ඇත! Admin අනුමත කළ පසු වෙබ් අඩවියේ දිස්වනු ඇත.";
+            document.getElementById("videoTitle").value = "";
+            document.getElementById("fileId").value = "";
+        } catch (error) {
+            status.innerText = "Error: දත්ත යැවීමට නොහැකි විය.";
+        }
+    }
+
+    loadApprovedVideos();
+</script>
 </body>
 </html>
