@@ -23,7 +23,7 @@
     button { padding: 6px 12px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; }
     .view-btn { background: #38bdf8; color: #000; }
     .approve-btn { background: #22c55e; color: #fff; }
-    select { padding: 6px; border-radius: 4px; background: #0f172a; color: #fff; border: 1px solid #475569; }
+    .action-group { display: flex; gap: 6px; align-items: center; }
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 100; }
     .modal-card { background: #1e293b; padding: 20px; border-radius: 12px; max-width: 90%; text-align: center; }
@@ -45,12 +45,11 @@
         <th>Phone</th>
         <th>Payment Slip</th>
         <th>Status</th>
-        <th>Send Pass Via</th>
-        <th>Action</th>
+        <th>Action & Re-send Options</th>
       </tr>
     </thead>
     <tbody id="tableBody">
-      <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
+      <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
     </tbody>
   </table>
 
@@ -74,12 +73,12 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9fRH056pxMNXvDiGr7RJeOyX3NQ4S1KhLwIUtdjjDg1iJdoLDqss1hc8zsMWWvquG3g/exec"; // 👈 Your Web App URL
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_Y_hoCJEKTRUqsCiveJvkUfgHfpsN-ApAw00dg5XMwFieBLJ06RuSKPEbwIGIkuV2-w/exec"; // 👈 ඔයාගේ Web App URL එක මෙතනට දමන්න
     let globalData = [];
 
     async function loadData() {
       const tbody = document.getElementById("tableBody");
-      tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Loading data...</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Loading data...</td></tr>";
 
       try {
         const res = await fetch(APPS_SCRIPT_URL);
@@ -95,21 +94,19 @@
             <td><button class="view-btn" onclick="viewSlip('${item.receiptUrl}')">📸 Slip</button></td>
             <td><span class="badge ${item.status.toLowerCase()}">${item.status}</span></td>
             <td>
-              <select id="method-${item.rowIndex}">
-                <option value="email">Email</option>
-                <option value="whatsapp">WhatsApp</option>
-              </select>
-            </td>
-            <td>
               ${item.status === "Pending" ? 
-                `<button class="approve-btn" id="btn-${item.rowIndex}" onclick="approve(${item.rowIndex})">Approve</button>` : 
-                `<button onclick="previewPass('${item.fullName}', '${item.ticketId}', '${item.qrCodeUrl}')" style="background:#0284c7; color:#fff;">View Pass</button>`}
+                `<button class="approve-btn" id="btn-${item.rowIndex}" onclick="approveAndSendBoth(${item.rowIndex})">🚀 Approve & Send Both</button>` : 
+                `<div class="action-group">
+                   <button onclick="previewPass('${item.fullName}', '${item.ticketId}', '${item.qrCodeUrl}')" style="background:#0284c7; color:#fff;">👁️ Pass</button>
+                   <button onclick="resendEmail(${item.rowIndex})" style="background:#3b82f6; color:#fff;">✉️ Email</button>
+                   <button onclick="resendWhatsApp('${item.phone}', '${item.fullName}', '${item.ticketId}', '${item.qrCodeUrl}')" style="background:#22c55e; color:#fff;">📲 WA</button>
+                 </div>`}
             </td>
           `;
           tbody.appendChild(row);
         });
       } catch(e) {
-        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#fca5a5;'>Failed to load data. Ensure script URL is correct.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#fca5a5;'>Failed to load data. Ensure script URL is correct.</td></tr>";
       }
     }
 
@@ -118,7 +115,7 @@
       document.getElementById("slipModal").style.display = "flex";
     }
 
-    // Canvas Image Builder Helper
+    // Canvas Merging Helper
     function buildPassBase64(qrUrl) {
       return new Promise((resolve) => {
         const canvas = document.getElementById("ticketCanvas");
@@ -159,42 +156,37 @@
       document.getElementById("ticketModal").style.display = "flex";
     }
 
-    async function approve(rowIndex) {
-      const sendMethod = document.getElementById(`method-${rowIndex}`).value;
+    // 1. APPROVE & SEND TO BOTH EMAIL + WHATSAPP AUTOMATICALLY
+    async function approveAndSendBoth(rowIndex) {
       const btn = document.getElementById(`btn-${rowIndex}`);
       const item = globalData.find(d => d.rowIndex === rowIndex);
 
       if(!item) return;
-      if(!confirm(`Confirm approval and send pass via ${sendMethod.toUpperCase()}?`)) return;
+      if(!confirm(`Confirm Approval for ${item.fullName}? Pass will be emailed & WhatsApp will open.`)) return;
 
       btn.disabled = true;
       btn.textContent = "Processing...";
 
       try {
-        // 1. Generate Merged Pass Image Base64
         const passImageBase64 = await buildPassBase64(item.qrCodeUrl);
 
-        // 2. Send Request to Apps Script
+        // A. Send Email in Background
         const res = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
           body: JSON.stringify({
             action: "approveBooking",
             rowIndex: rowIndex,
-            sendMethod: sendMethod,
             passImageBase64: passImageBase64
           })
         });
 
         const data = await res.json();
         if(data.status === "success") {
+          // B. Auto Open WhatsApp Chat in New Tab
+          resendWhatsApp(data.phone, data.name, data.ticketId, data.qrCodeUrl);
+          
+          // C. Show Pass Preview Modal
           document.getElementById("ticketModal").style.display = "flex";
-
-          if(sendMethod === "whatsapp") {
-            const msg = encodeURIComponent(`Hi ${data.name},\nYour Ticket Pass (${data.ticketId}) for QUESTORA'26 has been approved!\n\nPass QR Link:\n${data.qrCodeUrl}`);
-            window.open(`https://wa.me/${data.phone}?text=${msg}`, '_blank');
-          } else {
-            alert("Approved successfully! Pass Image attached and sent via Email.");
-          }
           loadData();
         } else {
           alert("Approval error: " + data.message);
@@ -203,8 +195,36 @@
         alert("Approval failed. Please try again.");
       } finally {
         btn.disabled = false;
-        btn.textContent = "Approve";
+        btn.textContent = "🚀 Approve & Send Both";
       }
+    }
+
+    // 2. RE-SEND EMAIL
+    async function resendEmail(rowIndex) {
+      const item = globalData.find(d => d.rowIndex === rowIndex);
+      if(!item) return;
+      if(!confirm(`Re-send Pass Email to ${item.email}?`)) return;
+
+      try {
+        const passImageBase64 = await buildPassBase64(item.qrCodeUrl);
+        await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approveBooking",
+            rowIndex: rowIndex,
+            passImageBase64: passImageBase64
+          })
+        });
+        alert("Email re-sent successfully!");
+      } catch(e) {
+        alert("Failed to re-send Email.");
+      }
+    }
+
+    // 3. RE-SEND WHATSAPP
+    function resendWhatsApp(phone, name, ticketId, qrUrl) {
+      const msg = encodeURIComponent(`Hi ${name},\nYour Ticket Pass (${ticketId}) for QUESTORA'26 is approved!\n\nYour Entrance QR Code:\n${qrUrl}`);
+      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
     }
 
     loadData();
