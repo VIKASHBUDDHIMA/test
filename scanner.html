@@ -5,31 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QUESTORA'26 - Gate Scanner</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-dark: #08090C;
+      --gold-primary: #D4AF37;
+      --border-glow: rgba(212, 175, 55, 0.3);
+    }
     * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
-    body { background: #0f172a; color: #fff; text-align: center; padding: 20px; }
-    h2 { color: #38bdf8; margin-bottom: 15px; }
-    #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 2px solid #38bdf8; }
-    
-    #resultBox { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; text-align: center; font-size: 1.1rem; }
-    .valid { background: #166534; color: #4ade80; border: 2px solid #22c55e; }
-    .used { background: #991b1b; color: #fca5a5; border: 2px solid #ef4444; }
-    .invalid { background: #7c2d12; color: #fdba74; border: 2px solid #f97316; }
-    button { margin-top: 15px; padding: 12px 24px; background: #0284c7; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    body { background-color: var(--bg-dark); color: #FFF; text-align: center; padding: 30px 20px; }
+
+    h2 { font-family: 'Cinzel', serif; color: var(--gold-primary); font-size: 1.6rem; margin-bottom: 5px; }
+    p.sub { font-size: 0.85rem; color: #94A3B8; margin-bottom: 25px; }
+
+    #reader {
+      width: 100%; max-width: 420px; margin: 0 auto; border-radius: 20px; overflow: hidden;
+      border: 2px solid var(--gold-primary); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+    }
+
+    #resultBox { margin-top: 25px; padding: 25px; border-radius: 16px; display: none; backdrop-filter: blur(10px); }
+    .valid { background: rgba(22, 101, 52, 0.9); color: #4ADE80; border: 2px solid #22C55E; box-shadow: 0 0 30px rgba(34, 197, 94, 0.4); }
+    .used { background: rgba(153, 27, 27, 0.9); color: #FCA5A5; border: 2px solid #EF4444; box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
+    .invalid { background: rgba(124, 45, 18, 0.9); color: #FDBA74; border: 2px solid #F97316; box-shadow: 0 0 30px rgba(249, 115, 22, 0.4); }
+
+    button { margin-top: 15px; padding: 12px 28px; background: var(--gold-primary); color: #000; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <h2>🎟️ QUESTORA'26 Gate Pass Scanner</h2>
-  <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:15px;">Point phone camera at attendee's QR Pass</p>
+  <h2>🎟️ QUESTORA'26 GATE PASS SCANNER</h2>
+  <p class="sub">Point camera at attendee's QR Pass to verify entrance</p>
 
   <div id="reader"></div>
 
   <div id="resultBox">
-    <h3 id="resTitle"></h3>
-    <p id="resMsg" style="margin-top:8px;"></p>
-    <p id="resName" style="font-weight:700; margin-top:5px; font-size:1.3rem;"></p>
+    <h3 id="resTitle" style="font-family:'Cinzel', serif; font-size:1.4rem;"></h3>
+    <p id="resMsg" style="margin-top:8px; font-size:0.95rem;"></p>
+    <p id="resName" style="font-weight:700; margin-top:10px; font-size:1.2rem; text-transform:uppercase;"></p>
     <button onclick="resetScanner()">📷 Scan Next Ticket</button>
   </div>
 
@@ -38,16 +50,13 @@
     let html5QrcodeScanner;
 
     function onScanSuccess(decodedText) {
-      if(html5QrcodeScanner) {
-        html5QrcodeScanner.clear();
-      }
+      if(html5QrcodeScanner) { html5QrcodeScanner.clear(); }
       verifyTicket(decodedText);
     }
 
     async function verifyTicket(ticketId) {
       const box = document.getElementById("resultBox");
-      box.style.display = "block";
-      box.className = "";
+      box.style.display = "block"; box.className = "";
       document.getElementById("resTitle").textContent = "⏳ Verifying Ticket...";
       document.getElementById("resMsg").textContent = "Pass ID: " + ticketId;
       document.getElementById("resName").textContent = "";
@@ -55,10 +64,7 @@
       try {
         const res = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
-          body: JSON.stringify({
-            action: "verifyTicket",
-            ticketId: ticketId
-          })
+          body: JSON.stringify({ action: "verifyTicket", ticketId: ticketId })
         });
 
         const data = await res.json();
@@ -80,7 +86,7 @@
       } catch (e) {
         box.className = "invalid";
         document.getElementById("resTitle").textContent = "⚠️ CONNECTION ERROR";
-        document.getElementById("resMsg").textContent = "Ensure Apps Script is deployed as 'New Version' and access is set to 'Anyone'.";
+        document.getElementById("resMsg").textContent = "Check network or script deployment status.";
       }
     }
 
