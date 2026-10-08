@@ -1,122 +1,302 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Video Portal</title>
-    <style>
-        body { font-family: sans-serif; background-color: #f4f6f9; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin-bottom: 20px; text-align: center; }
-        input, button { width: 90%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; }
-        button { background-color: #0088cc; color: white; cursor: pointer; border: none; font-weight: bold; }
-        .video-list { width: 100%; max-width: 600px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .video-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; color: #333; font-weight: bold; }
-        .video-item:hover { background-color: #f0f0f0; }
-        video { width: 100%; border-radius: 8px; background: #000; margin-top: 10px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Get-Together Ticket Pass</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #1e293b;
+      width: 100%;
+      max-width: 480px;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      border: 1px solid #334155;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h2 {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .bank-details {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 10px;
+      border-left: 4px solid #38bdf8;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    .bank-details h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: #f1f5f9;
+    }
+
+    .bank-details p {
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .ticket-price-info {
+      margin-top: 8px;
+      color: #38bdf8 !important;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: #38bdf8;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #334155;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+    }
+
+    .summary strong {
+      color: #4ade80;
+      font-size: 1.1rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #0369a1;
+    }
+
+    button:disabled {
+      background: #475569;
+      cursor: not-allowed;
+    }
+
+    #statusMessage {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    #statusMessage.success {
+      background: #166534;
+      color: #4ade80;
+    }
+
+    #statusMessage.error {
+      background: #991b1b;
+      color: #fca5a5;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="header">
+      <h2>🎉 School Reunion 2026</h2>
+      <p>Reserve your ticket pass & upload your payment receipt</p>
+    </div>
 
-<div class="container">
-    <h2>Video Player (Approved Only)</h2>
-    <video id="telegramVideo" controls></video>
-    <p id="playerStatus">වීඩියෝවක් තෝරන්න...</p>
-</div>
+    <!-- Bank Details Card -->
+    <div class="bank-details">
+      <h3>🏦 Bank Account Details</h3>
+      <p><strong>Bank:</strong> Commercial Bank</p>
+      <p><strong>Account Name:</strong> School Alumni Association</p>
+      <p><strong>Account Number:</strong> 80012345678</p>
+      <p><strong>Branch:</strong> Colombo Main</p>
+      <p class="ticket-price-info">💡 Ticket Price: <strong>LKR 2,500</strong> per person</p>
+    </div>
 
-<div class="container">
-    <h3>Suggest a New Video</h3>
-    <input type="text" id="videoTitle" placeholder="Video Title එක ඇතුළත් කරන්න">
-    <input type="text" id="fileId" placeholder="Telegram File ID එක ඇතුළත් කරන්න">
-    <button onclick="submitVideo()">Submit for Approval</button>
-    <p id="uploadStatus"></p>
-</div>
+    <!-- Booking Form -->
+    <form id="ticketForm">
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" required placeholder="John Doe">
+      </div>
 
-<div class="video-list">
-    <h3>Available Videos</h3>
-    <div id="approvedContainer">Loading videos...</div>
-</div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" required placeholder="john@example.com">
+      </div>
 
-<script>
-    // ඔයාගේ තොරතුරු මෙතනට දාන්න
-    const API_URL = "https://script.google.com/macros/s/AKfycbwS1aNNbiAtmUaZKkUBg-9On60AY4R9eWARuIhyBsVSwpLqEHzMh9sRzDpqIfkqEtggRA/exec"; 
-    const BOT_TOKEN = "8974378669:AAE3fxJa-OdGUi9HXiKkPu9b7SC8QeUXp4Q";
+      <div class="form-group">
+        <label for="phone">Phone Number (WhatsApp)</label>
+        <input type="tel" id="phone" required placeholder="0771234567">
+      </div>
 
-    // 1. Approve කරපු වීඩියෝ ටික විතරක් ෂීට් එකෙන් ලෝඩ් කරගැනීම
-    async function loadApprovedVideos() {
-        try {
-            const response = await fetch(`${API_URL}?action=getApproved`);
-            const data = await response.json();
-            const container = document.getElementById("approvedContainer");
-            container.innerHTML = "";
+      <div class="form-group">
+        <label for="ticketCount">Number of Tickets</label>
+        <input type="number" id="ticketCount" min="1" max="10" value="1" required>
+      </div>
 
-            if(data.length === 0) {
-                container.innerText = "තවම කිසිදු වීඩියෝවක් අනුමත කර නැත.";
-                return;
-            }
+      <div class="summary">
+        <span>Total Amount to Pay:</span>
+        <strong id="totalDisplay">LKR 2,500</strong>
+      </div>
 
-            data.forEach(video => {
-                const div = document.createElement("div");
-                div.className = "video-item";
-                div.innerText = video.title;
-                div.onclick = () => playVideo(video.fileID, video.title);
-                container.appendChild(div);
-            });
-        } catch (error) {
-            console.error(error);
-        }
+      <div class="form-group">
+        <label for="receipt">Upload Payment Slip / Receipt</label>
+        <input type="file" id="receipt" accept="image/*,.pdf" required>
+      </div>
+
+      <button type="submit" id="submitBtn">Submit Request</button>
+    </form>
+
+    <!-- Status Message -->
+    <div id="statusMessage" class="hidden"></div>
+  </div>
+
+  <script>
+    // Google Apps Script Deploy කල පසු ලැබෙන Web App URL එක මෙතැනට යොදන්න
+    const APPS_SCRIPT_URL = "YOUR_DEPLOYED_WEB_APP_URL_HERE";
+    const TICKET_PRICE = 2500;
+
+    const ticketCountInput = document.getElementById("ticketCount");
+    const totalDisplay = document.getElementById("totalDisplay");
+    const form = document.getElementById("ticketForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusMessage = document.getElementById("statusMessage");
+
+    // Dynamic Price Calculation
+    ticketCountInput.addEventListener("input", () => {
+      const count = parseInt(ticketCountInput.value) || 1;
+      const total = count * TICKET_PRICE;
+      totalDisplay.textContent = `LKR ${total.toLocaleString()}`;
+    });
+
+    // Helper: Convert File to Base64
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
     }
 
-    // 2. තෝරාගත් වීඩියෝව ප්ලේ කිරීම
-    async function playVideo(fileId, title) {
-        const status = document.getElementById("playerStatus");
-        const video = document.getElementById("telegramVideo");
-        status.innerText = `Loading: ${title}...`;
+    // Form Submission
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      if (APPS_SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxrKHy_vY6TuQZ5hRjRRgQF2NFVMeUg7bF1qiiGjLO5DJbAi3hsGp14SG-lSOng9Dsk-Q/exec") {
+        alert("කරුණාකර Apps Script Web App URL එක script එකෙහි ඇතුළත් කරන්න.");
+        return;
+      }
 
-        try {
-            const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
-            const data = await response.json();
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Uploading & Submitting...";
+      statusMessage.className = "hidden";
 
-            if (data.ok) {
-                const filePath = data.result.file_path;
-                video.src = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
-                status.innerText = `Playing: ${title}`;
-                video.play();
-            } else {
-                status.innerText = "Error: වීඩියෝ ලින්ක් එක ලබාගත නොහැක.";
-            }
-        } catch (error) {
-            status.innerText = "Error: Telegram සර්වර් එක සමඟ සම්බන්ධ විය නොහැක.";
+      try {
+        const fileInput = document.getElementById("receipt").files[0];
+        const base64File = await fileToBase64(fileInput);
+
+        const formData = new URLSearchParams();
+        formData.append("fullName", document.getElementById("fullName").value);
+        formData.append("email", document.getElementById("email").value);
+        formData.append("phone", document.getElementById("phone").value);
+        formData.append("ticketCount", ticketCountInput.value);
+        formData.append("totalAmount", ticketCountInput.value * TICKET_PRICE);
+        formData.append("fileName", fileInput.name);
+        formData.append("fileType", fileInput.type);
+        formData.append("fileData", base64File);
+
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status === "success") {
+          statusMessage.textContent = `✅ Request Sent! Your Reference Ticket ID: ${result.ticketId}. We will verify your payment and email the QR pass.`;
+          statusMessage.className = "success";
+          form.reset();
+          totalDisplay.textContent = `LKR ${TICKET_PRICE.toLocaleString()}`;
+        } else {
+          throw new Error(result.message);
         }
-    }
 
-    // 3. වීඩියෝවක් Pending ලිස්ට් එකට යැවීම
-    async function submitVideo() {
-        const title = document.getElementById("videoTitle").value;
-        const fileId = document.getElementById("fileId").value;
-        const status = document.getElementById("uploadStatus");
-
-        if(!title || !fileId) {
-            status.innerText = "කරුණාකර සියලුම විස්තර පුරවන්න.";
-            return;
-        }
-
-        status.innerText = "යවමින් පවතී...";
-
-        try {
-            const response = await fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "upload", title: title, fileID: fileId })
-            });
-            const result = await response.text();
-            status.innerText = "සාර්ථකව ඉදිරිපත් කර ඇත! Admin අනුමත කළ පසු වෙබ් අඩවියේ දිස්වනු ඇත.";
-            document.getElementById("videoTitle").value = "";
-            document.getElementById("fileId").value = "";
-        } catch (error) {
-            status.innerText = "Error: දත්ත යැවීමට නොහැකි විය.";
-        }
-    }
-
-    loadApprovedVideos();
-</script>
+      } catch (error) {
+        statusMessage.textContent = "❌ Submission failed. Please try again or contact support.";
+        statusMessage.className = "error";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Request";
+      }
+    });
+  </script>
 </body>
 </html>
