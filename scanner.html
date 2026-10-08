@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUESTORA'26 - Gate Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
+    body { background: #0f172a; color: #fff; text-align: center; padding: 20px; }
+    h2 { color: #38bdf8; margin-bottom: 15px; }
+    #reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; border: 2px solid #38bdf8; }
+    
+    #resultBox { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; text-align: center; font-size: 1.1rem; }
+    .valid { background: #166534; color: #4ade80; border: 2px solid #22c55e; }
+    .used { background: #991b1b; color: #fca5a5; border: 2px solid #ef4444; }
+    .invalid { background: #7c2d12; color: #fdba74; border: 2px solid #f97316; }
+    button { margin-top: 15px; padding: 12px 24px; background: #0284c7; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <h2>🎟️ QUESTORA'26 Gate Pass Scanner</h2>
+  <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:15px;">Point camera at attendee's QR Pass</p>
+
+  <div id="reader"></div>
+
+  <div id="resultBox">
+    <h3 id="resTitle"></h3>
+    <p id="resMsg" style="margin-top:8px;"></p>
+    <p id="resName" style="font-weight:700; margin-top:5px; font-size:1.3rem;"></p>
+    <button onclick="resetScanner()">📷 Scan Next Ticket</button>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = "YOUR_DEPLOYED_WEB_APP_URL_HERE"; // 👈 Your Web App URL
+    let html5QrcodeScanner;
+
+    function onScanSuccess(decodedText) {
+      html5QrcodeScanner.clear();
+      verifyTicket(decodedText);
+    }
+
+    async function verifyTicket(ticketId) {
+      const box = document.getElementById("resultBox");
+      box.style.display = "block";
+      box.className = "";
+      document.getElementById("resTitle").textContent = "⏳ Verifying Ticket...";
+      document.getElementById("resMsg").textContent = ticketId;
+      document.getElementById("resName").textContent = "";
+
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "verifyTicket",
+            ticketId: ticketId
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.status === "valid") {
+          box.className = "valid";
+          document.getElementById("resTitle").textContent = "✅ VALID TICKET";
+          document.getElementById("resMsg").textContent = "Allowed Entrance";
+          document.getElementById("resName").textContent = "Name: " + data.name;
+        } else if (data.status === "used") {
+          box.className = "used";
+          document.getElementById("resTitle").textContent = "⛔ ALREADY USED";
+          document.getElementById("resMsg").textContent = data.message;
+        } else {
+          box.className = "invalid";
+          document.getElementById("resTitle").textContent = "❌ INVALID PASS";
+          document.getElementById("resMsg").textContent = data.message;
+        }
+      } catch (e) {
+        alert("Verification failed. Check Internet Connection!");
+      }
+    }
+
+    function startScanner() {
+      html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+      html5QrcodeScanner.render(onScanSuccess);
+    }
+
+    function resetScanner() {
+      document.getElementById("resultBox").style.display = "none";
+      startScanner();
+    }
+
+    startScanner();
+  </script>
+</body>
+</html>
