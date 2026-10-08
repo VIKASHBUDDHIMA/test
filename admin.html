@@ -73,7 +73,7 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_Y_hoCJEKTRUqsCiveJvkUfgHfpsN-ApAw00dg5XMwFieBLJ06RuSKPEbwIGIkuV2-w/exec"; // 👈 ඔයාගේ Web App URL එක මෙතනට දමන්න
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_Y_hoCJEKTRUqsCiveJvkUfgHfpsN-ApAw00dg5XMwFieBLJ06RuSKPEbwIGIkuV2-w/exec";
     let globalData = [];
 
     async function loadData() {
@@ -162,7 +162,7 @@
       const item = globalData.find(d => d.rowIndex === rowIndex);
 
       if(!item) return;
-      if(!confirm(`Confirm Approval for ${item.fullName}? Pass will be emailed & WhatsApp will open.`)) return;
+      if(!confirm(`Confirm Approval for ${item.fullName}? Pass Image will be emailed & downloaded for WhatsApp.`)) return;
 
       btn.disabled = true;
       btn.textContent = "Processing...";
@@ -170,7 +170,7 @@
       try {
         const passImageBase64 = await buildPassBase64(item.qrCodeUrl);
 
-        // A. Send Email in Background
+        // A. Send Email with Image Attachment in Background
         const res = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
           body: JSON.stringify({
@@ -182,10 +182,9 @@
 
         const data = await res.json();
         if(data.status === "success") {
-          // B. Auto Open WhatsApp Chat in New Tab
+          // B. Trigger WhatsApp Chat & Auto-Download Merged Pass Image
           resendWhatsApp(data.phone, data.name, data.ticketId, data.qrCodeUrl);
           
-          // C. Show Pass Preview Modal
           document.getElementById("ticketModal").style.display = "flex";
           loadData();
         } else {
@@ -215,15 +214,27 @@
             passImageBase64: passImageBase64
           })
         });
-        alert("Email re-sent successfully!");
+        alert("Email re-sent successfully with Pass Image attached!");
       } catch(e) {
         alert("Failed to re-send Email.");
       }
     }
 
-    // 3. RE-SEND WHATSAPP
-    function resendWhatsApp(phone, name, ticketId, qrUrl) {
-      const msg = encodeURIComponent(`Hi ${name},\nYour Ticket Pass (${ticketId}) for QUESTORA'26 is approved!\n\nYour Entrance QR Code:\n${qrUrl}`);
+    // 3. RE-SEND WHATSAPP (AUTO-DOWNLOAD PASS IMAGE & OPEN CHAT)
+    async function resendWhatsApp(phone, name, ticketId, qrUrl) {
+      const passBase64 = await buildPassBase64(qrUrl);
+      
+      if (passBase64) {
+        // Auto Download Merged Template Pass Image onto device
+        const downloadLink = document.createElement('a');
+        downloadLink.href = passBase64;
+        downloadLink.download = `QUESTORA26_Pass_${ticketId}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      }
+
+      const msg = encodeURIComponent(`Hi ${name},\nYour Ticket Pass (${ticketId}) for QUESTORA'26 has been approved!\n\nAttached is your official Ticket Pass Image. Please present this pass image at the gate entrance.`);
       window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
     }
 
