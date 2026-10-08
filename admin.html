@@ -61,7 +61,7 @@
     </div>
   </div>
 
-  <!-- Generated Ticket Pass Modal -->
+  <!-- Generated Pass Modal -->
   <div class="modal" id="ticketModal">
     <div class="modal-card">
       <h3 style="color:#38bdf8; margin-bottom:10px;">🎟️ QUESTORA'26 Official Pass</h3>
@@ -74,7 +74,8 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBxTRxMstyjg0vrM7D6uDj3_VScO0TMYWjbqVDwjQcZfB8k9UH6PuwLhX8z4tOWp1HLg/exec"; // 👈 Your Web App URL
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9fRH056pxMNXvDiGr7RJeOyX3NQ4S1KhLwIUtdjjDg1iJdoLDqss1hc8zsMWWvquG3g/exec"; // 👈 Your Web App URL
+    let globalData = [];
 
     async function loadData() {
       const tbody = document.getElementById("tableBody");
@@ -82,10 +83,10 @@
 
       try {
         const res = await fetch(APPS_SCRIPT_URL);
-        const data = await res.json();
+        globalData = await res.json();
 
         tbody.innerHTML = "";
-        data.forEach(item => {
+        globalData.forEach(item => {
           const row = document.createElement("tr");
           row.innerHTML = `
             <td><strong>${item.ticketId}</strong></td>
@@ -95,20 +96,20 @@
             <td><span class="badge ${item.status.toLowerCase()}">${item.status}</span></td>
             <td>
               <select id="method-${item.rowIndex}">
-                <option value="whatsapp">WhatsApp</option>
                 <option value="email">Email</option>
+                <option value="whatsapp">WhatsApp</option>
               </select>
             </td>
             <td>
               ${item.status === "Pending" ? 
-                `<button class="approve-btn" onclick="approve(${item.rowIndex})">Approve</button>` : 
-                `<button onclick="generatePassCard('${item.fullName}', '${item.ticketId}', '${item.qrCodeUrl}')" style="background:#0284c7; color:#fff;">View Pass</button>`}
+                `<button class="approve-btn" id="btn-${item.rowIndex}" onclick="approve(${item.rowIndex})">Approve</button>` : 
+                `<button onclick="previewPass('${item.fullName}', '${item.ticketId}', '${item.qrCodeUrl}')" style="background:#0284c7; color:#fff;">View Pass</button>`}
             </td>
           `;
           tbody.appendChild(row);
         });
       } catch(e) {
-        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#fca5a5;'>Failed to load data.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#fca5a5;'>Failed to load data. Ensure script URL is correct.</td></tr>";
       }
     }
 
@@ -117,67 +118,92 @@
       document.getElementById("slipModal").style.display = "flex";
     }
 
-    // -------------------------------------------------------------
-    // CANVAS MERGING: PLACING QR CODE EXACTLY INSIDE WHITE BOX
-    // -------------------------------------------------------------
-    function generatePassCard(name, ticketId, qrUrl) {
-      const canvas = document.getElementById("ticketCanvas");
-      const ctx = canvas.getContext("2d");
+    // Canvas Image Builder Helper
+    function buildPassBase64(qrUrl) {
+      return new Promise((resolve) => {
+        const canvas = document.getElementById("ticketCanvas");
+        const ctx = canvas.getContext("2d");
 
-      const templateImg = new Image();
-      templateImg.crossOrigin = "Anonymous";
-      templateImg.src = "ticket-template.png"; // Your template image file name in GitHub
+        const templateImg = new Image();
+        templateImg.crossOrigin = "Anonymous";
+        templateImg.src = "ticket-template.png";
 
-      templateImg.onload = () => {
-        canvas.width = templateImg.width;
-        canvas.height = templateImg.height;
+        templateImg.onload = () => {
+          canvas.width = templateImg.width;
+          canvas.height = templateImg.height;
+          ctx.drawImage(templateImg, 0, 0);
 
-        // 1. Draw Template Background
-        ctx.drawImage(templateImg, 0, 0);
+          const qrImg = new Image();
+          qrImg.crossOrigin = "Anonymous";
+          qrImg.src = qrUrl;
 
-        // 2. Draw QR Code Exactly Inside the White Box
-        const qrImg = new Image();
-        qrImg.crossOrigin = "Anonymous";
-        qrImg.src = qrUrl;
+          qrImg.onload = () => {
+            const qrSize = canvas.width * 0.39;
+            const qrX = (canvas.width - qrSize) / 2;
+            const qrY = canvas.height * 0.342;
 
-        qrImg.onload = () => {
-          const qrSize = canvas.width * 0.39;            // Exact Box Width
-          const qrX = (canvas.width - qrSize) / 2;       // Horizontally Centered
-          const qrY = canvas.height * 0.342;             // Vertically Positioned
+            ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-
-          const dataUrl = canvas.toDataURL("image/png");
-          document.getElementById("downloadTicketBtn").href = dataUrl;
-          document.getElementById("ticketModal").style.display = "flex";
+            const dataUrl = canvas.toDataURL("image/png");
+            document.getElementById("downloadTicketBtn").href = dataUrl;
+            resolve(dataUrl);
+          };
+          qrImg.onerror = () => resolve(null);
         };
-      };
+        templateImg.onerror = () => resolve(null);
+      });
+    }
+
+    async function previewPass(name, ticketId, qrUrl) {
+      await buildPassBase64(qrUrl);
+      document.getElementById("ticketModal").style.display = "flex";
     }
 
     async function approve(rowIndex) {
       const sendMethod = document.getElementById(`method-${rowIndex}`).value;
+      const btn = document.getElementById(`btn-${rowIndex}`);
+      const item = globalData.find(d => d.rowIndex === rowIndex);
+
+      if(!item) return;
       if(!confirm(`Confirm approval and send pass via ${sendMethod.toUpperCase()}?`)) return;
 
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "approveBooking",
-          rowIndex: rowIndex,
-          sendMethod: sendMethod
-        })
-      });
+      btn.disabled = true;
+      btn.textContent = "Processing...";
 
-      const data = await res.json();
-      if(data.status === "success") {
-        generatePassCard(data.name, data.ticketId, data.qrCodeUrl);
+      try {
+        // 1. Generate Merged Pass Image Base64
+        const passImageBase64 = await buildPassBase64(item.qrCodeUrl);
 
-        if(sendMethod === "whatsapp") {
-          const msg = encodeURIComponent(`Hi ${data.name},\nYour Ticket Pass (${data.ticketId}) for QUESTORA'26 is approved!\n\nYour Entrance QR Code:\n${data.qrCodeUrl}`);
-          window.open(`https://wa.me/${data.phone}?text=${msg}`, '_blank');
+        // 2. Send Request to Apps Script
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approveBooking",
+            rowIndex: rowIndex,
+            sendMethod: sendMethod,
+            passImageBase64: passImageBase64
+          })
+        });
+
+        const data = await res.json();
+        if(data.status === "success") {
+          document.getElementById("ticketModal").style.display = "flex";
+
+          if(sendMethod === "whatsapp") {
+            const msg = encodeURIComponent(`Hi ${data.name},\nYour Ticket Pass (${data.ticketId}) for QUESTORA'26 has been approved!\n\nPass QR Link:\n${data.qrCodeUrl}`);
+            window.open(`https://wa.me/${data.phone}?text=${msg}`, '_blank');
+          } else {
+            alert("Approved successfully! Pass Image attached and sent via Email.");
+          }
+          loadData();
         } else {
-          alert("Approved! Confirmation Email sent.");
+          alert("Approval error: " + data.message);
         }
-        loadData();
+      } catch(err) {
+        alert("Approval failed. Please try again.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Approve";
       }
     }
 
