@@ -31,7 +31,7 @@
   <div class="container">
     <div class="header">
       <h2>🎉 School Reunion 2026</h2>
-      <p style="font-size:0.85rem; color:#94a3b8;">Reserve your ticket pass & upload receipt</p>
+      <p style="font-size:0.85rem; color:#94a3b8;">Get your entrance pass (1 Pass per person)</p>
     </div>
 
     <div class="bank-details">
@@ -40,7 +40,7 @@
       <p><strong>Account Name:</strong> School Alumni Association</p>
       <p><strong>Account Number:</strong> 80012345678</p>
       <p><strong>Branch:</strong> Colombo Main</p>
-      <p style="color:#38bdf8; margin-top:8px;">💡 Ticket Price: <strong>LKR 2,500</strong> per person</p>
+      <p style="color:#38bdf8; margin-top:8px;">💡 Ticket Price: <strong>LKR 2,500</strong></p>
     </div>
 
     <form id="ticketForm">
@@ -56,14 +56,12 @@
         <label>Phone Number (WhatsApp)</label>
         <input type="tel" id="phone" required placeholder="0771234567">
       </div>
-      <div class="form-group">
-        <label>Number of Tickets</label>
-        <input type="number" id="ticketCount" min="1" max="10" value="1" required>
-      </div>
+      
       <div class="summary">
-        <span>Total Amount:</span>
-        <strong id="totalDisplay">LKR 2,500</strong>
+        <span>Ticket Price:</span>
+        <strong>LKR 2,500</strong>
       </div>
+      
       <div class="form-group">
         <label>Upload Payment Slip / Receipt</label>
         <input type="file" id="receipt" accept="image/*" required>
@@ -72,16 +70,16 @@
     </form>
   </div>
 
-  <!-- User Digital Proof Modal -->
+  <!-- User Proof Modal -->
   <div class="modal" id="proofModal">
     <div class="modal-content">
       <h3 style="color:#4ade80;">✅ Request Submitted!</h3>
-      <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Please take a screenshot of this receipt as proof.</p>
+      <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Please save/screenshot this receipt as proof.</p>
       
       <div class="receipt-card">
         <p><strong>Reference ID:</strong> <span id="rId" style="color:#38bdf8;"></span></p>
         <p><strong>Name:</strong> <span id="rName"></span></p>
-        <p><strong>Amount Paid:</strong> <span id="rAmount"></span></p>
+        <p><strong>Amount Paid:</strong> <span id="rAmount">LKR 2,500</span></p>
         <p><strong>Status:</strong> <span style="color:#fbbf24;">Pending Verification</span></p>
       </div>
 
@@ -91,16 +89,8 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2ZZpROE9G3TdT0cG2AsUyQYoCpAWBwusNl0M66PbSI2fgfytmufUEDrH4U_NbfB1V/exec"; // 👈 Paste Web App URL Here
-    const TICKET_PRICE = 2500;
-
-    const ticketCount = document.getElementById("ticketCount");
-    const totalDisplay = document.getElementById("totalDisplay");
-
-    ticketCount.addEventListener("input", () => {
-      const count = parseInt(ticketCount.value) || 1;
-      totalDisplay.textContent = `LKR ${(count * TICKET_PRICE).toLocaleString()}`;
-    });
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHGDFiIbaXTV99V0Puxgh11kt7Jd9TEhLXGE7lb7i8NDaqP877zTXz2SF9qIGJGjTz6Q/exec"; // 👈 Your Web App URL
+    const FIXED_PRICE = 2500;
 
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
@@ -115,7 +105,7 @@
       e.preventDefault();
       const btn = document.getElementById("submitBtn");
       btn.disabled = true; 
-      btn.textContent = "Uploading & Submitting...";
+      btn.textContent = "Uploading & Validating...";
 
       try {
         const file = document.getElementById("receipt").files[0];
@@ -126,8 +116,7 @@
           fullName: document.getElementById("fullName").value,
           email: document.getElementById("email").value,
           phone: document.getElementById("phone").value,
-          ticketCount: ticketCount.value,
-          totalAmount: ticketCount.value * TICKET_PRICE,
+          totalAmount: FIXED_PRICE,
           fileName: file.name,
           fileType: file.type,
           fileData: base64
@@ -143,13 +132,14 @@
         if (data.status === "success") {
           document.getElementById("rId").textContent = data.ticketId;
           document.getElementById("rName").textContent = data.fullName;
-          document.getElementById("rAmount").textContent = "LKR " + data.totalAmount;
           document.getElementById("proofModal").style.display = "flex";
+        } else if (data.status === "duplicate") {
+          alert("⚠️ Warning: " + data.message);
         } else {
-          alert("Submission Error: " + data.message);
+          alert("Error: " + data.message);
         }
       } catch (err) {
-        alert("Submission failed. Please check internet connection.");
+        alert("Submission failed. Check internet connection.");
       } finally {
         btn.disabled = false; 
         btn.textContent = "Submit Request";
