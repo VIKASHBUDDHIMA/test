@@ -22,7 +22,7 @@
 <body>
 
   <h2>🎟️ QUESTORA'26 Gate Pass Scanner</h2>
-  <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:15px;">Point camera at attendee's QR Pass</p>
+  <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:15px;">Point phone camera at attendee's QR Pass</p>
 
   <div id="reader"></div>
 
@@ -38,7 +38,9 @@
     let html5QrcodeScanner;
 
     function onScanSuccess(decodedText) {
-      html5QrcodeScanner.clear();
+      if(html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
+      }
       verifyTicket(decodedText);
     }
 
@@ -47,7 +49,7 @@
       box.style.display = "block";
       box.className = "";
       document.getElementById("resTitle").textContent = "⏳ Verifying Ticket...";
-      document.getElementById("resMsg").textContent = ticketId;
+      document.getElementById("resMsg").textContent = "Pass ID: " + ticketId;
       document.getElementById("resName").textContent = "";
 
       try {
@@ -64,7 +66,7 @@
         if (data.status === "valid") {
           box.className = "valid";
           document.getElementById("resTitle").textContent = "✅ VALID TICKET";
-          document.getElementById("resMsg").textContent = "Allowed Entrance";
+          document.getElementById("resMsg").textContent = "Entrance Allowed";
           document.getElementById("resName").textContent = "Name: " + data.name;
         } else if (data.status === "used") {
           box.className = "used";
@@ -76,7 +78,9 @@
           document.getElementById("resMsg").textContent = data.message;
         }
       } catch (e) {
-        alert("Verification failed. Check Internet Connection!");
+        box.className = "invalid";
+        document.getElementById("resTitle").textContent = "⚠️ CONNECTION ERROR";
+        document.getElementById("resMsg").textContent = "Ensure Apps Script is deployed as 'New Version' and access is set to 'Anyone'.";
       }
     }
 
