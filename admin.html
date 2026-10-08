@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Ticket Approvals</title>
+  <title>QUESTORA'26 - Admin Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
@@ -33,7 +33,7 @@
 <body>
 
   <div class="header-bar">
-    <h2>🔑 Ticket Admin Dashboard</h2>
+    <h2>🔑 QUESTORA'26 Admin Dashboard</h2>
     <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
   </div>
 
@@ -54,27 +54,27 @@
     </tbody>
   </table>
 
-  <!-- Modal for View Slip -->
+  <!-- View Slip Modal -->
   <div class="modal" id="slipModal" onclick="this.style.display='none'">
     <div class="modal-card">
       <img id="slipImg" src="">
     </div>
   </div>
 
-  <!-- Modal for Generated Ticket Preview -->
+  <!-- Generated Ticket Pass Modal -->
   <div class="modal" id="ticketModal">
     <div class="modal-card">
-      <h3 style="color:#38bdf8; margin-bottom:10px;">🎟️ Generated Pass Preview</h3>
+      <h3 style="color:#38bdf8; margin-bottom:10px;">🎟️ QUESTORA'26 Official Pass</h3>
       <canvas id="ticketCanvas"></canvas>
       <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
-        <a id="downloadTicketBtn" download="ticket-pass.png" style="padding:10px 15px; background:#22c55e; color:#fff; text-decoration:none; border-radius:6px; font-weight:600;">📥 Download Pass Image</a>
+        <a id="downloadTicketBtn" download="QUESTORA26-Pass.png" style="padding:10px 15px; background:#22c55e; color:#fff; text-decoration:none; border-radius:6px; font-weight:600;">📥 Download Pass Image</a>
         <button onclick="document.getElementById('ticketModal').style.display='none'" style="background:#475569; color:#fff;">Close</button>
       </div>
     </div>
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHGDFiIbaXTV99V0Puxgh11kt7Jd9TEhLXGE7lb7i8NDaqP877zTXz2SF9qIGJGjTz6Q/exec"; // 👈 Paste Web App URL
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBxTRxMstyjg0vrM7D6uDj3_VScO0TMYWjbqVDwjQcZfB8k9UH6PuwLhX8z4tOWp1HLg/exec"; // 👈 Your Web App URL
 
     async function loadData() {
       const tbody = document.getElementById("tableBody");
@@ -102,7 +102,7 @@
             <td>
               ${item.status === "Pending" ? 
                 `<button class="approve-btn" onclick="approve(${item.rowIndex})">Approve</button>` : 
-                `<button onclick="generatePassCard('${item.fullName}', '${item.ticketId}', '${item.qrCodeUrl}')" style="background:#0284c7; color:#fff;">View Ticket</button>`}
+                `<button onclick="generatePassCard('${item.fullName}', '${item.ticketId}', '${item.qrCodeUrl}')" style="background:#0284c7; color:#fff;">View Pass</button>`}
             </td>
           `;
           tbody.appendChild(row);
@@ -118,7 +118,7 @@
     }
 
     // -------------------------------------------------------------
-    // CANVAS: TEMPLATE + QR + NAME MERGING LOGIC
+    // CANVAS MERGING: PLACING QR CODE EXACTLY INSIDE WHITE BOX
     // -------------------------------------------------------------
     function generatePassCard(name, ticketId, qrUrl) {
       const canvas = document.getElementById("ticketCanvas");
@@ -126,7 +126,7 @@
 
       const templateImg = new Image();
       templateImg.crossOrigin = "Anonymous";
-      templateImg.src = "ticket-template.png"; // 👈 Path to your template image in GitHub
+      templateImg.src = "ticket-template.png"; // Your template image file name in GitHub
 
       templateImg.onload = () => {
         canvas.width = templateImg.width;
@@ -135,29 +135,18 @@
         // 1. Draw Template Background
         ctx.drawImage(templateImg, 0, 0);
 
-        // 2. Draw QR Code
+        // 2. Draw QR Code Exactly Inside the White Box
         const qrImg = new Image();
         qrImg.crossOrigin = "Anonymous";
         qrImg.src = qrUrl;
 
         qrImg.onload = () => {
-          // 🛠️ Adjust QR Position and Size here:
-          const qrSize = 180;
-          const qrX = canvas.width - qrSize - 50; // Right side
-          const qrY = (canvas.height - qrSize) / 2; // Vertically centered
+          const qrSize = canvas.width * 0.39;            // Exact Box Width
+          const qrX = (canvas.width - qrSize) / 2;       // Horizontally Centered
+          const qrY = canvas.height * 0.342;             // Vertically Positioned
 
           ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-          // 3. Draw Text (Name & Ticket ID)
-          ctx.fillStyle = "#FFFFFF"; // Font color
-          ctx.font = "bold 28px Poppins, sans-serif";
-          ctx.fillText("Name: " + name, 50, canvas.height - 90);
-          
-          ctx.fillStyle = "#38BDF8";
-          ctx.font = "600 22px Poppins, sans-serif";
-          ctx.fillText("ID: " + ticketId, 50, canvas.height - 50);
-
-          // Enable Download Link
           const dataUrl = canvas.toDataURL("image/png");
           document.getElementById("downloadTicketBtn").href = dataUrl;
           document.getElementById("ticketModal").style.display = "flex";
@@ -183,7 +172,7 @@
         generatePassCard(data.name, data.ticketId, data.qrCodeUrl);
 
         if(sendMethod === "whatsapp") {
-          const msg = encodeURIComponent(`Hi ${data.name},\nYour Ticket Pass (${data.ticketId}) for School Reunion 2026 is approved!\n\nQR Pass Link: ${data.qrCodeUrl}`);
+          const msg = encodeURIComponent(`Hi ${data.name},\nYour Ticket Pass (${data.ticketId}) for QUESTORA'26 is approved!\n\nYour Entrance QR Code:\n${data.qrCodeUrl}`);
           window.open(`https://wa.me/${data.phone}?text=${msg}`, '_blank');
         } else {
           alert("Approved! Confirmation Email sent.");
