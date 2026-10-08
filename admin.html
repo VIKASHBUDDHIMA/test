@@ -156,13 +156,13 @@
       document.getElementById("ticketModal").style.display = "flex";
     }
 
-    // 1. APPROVE & SEND TO BOTH EMAIL + WHATSAPP AUTOMATICALLY
+    // 1. APPROVE & SEND TO BOTH EMAIL + WHATSAPP (NO LOCAL DOWNLOAD HERE)
     async function approveAndSendBoth(rowIndex) {
       const btn = document.getElementById(`btn-${rowIndex}`);
       const item = globalData.find(d => d.rowIndex === rowIndex);
 
       if(!item) return;
-      if(!confirm(`Confirm Approval for ${item.fullName}? Pass Image will be emailed & downloaded for WhatsApp.`)) return;
+      if(!confirm(`Confirm Approval for ${item.fullName}? Pass Image will be emailed & WhatsApp will open.`)) return;
 
       btn.disabled = true;
       btn.textContent = "Processing...";
@@ -170,7 +170,7 @@
       try {
         const passImageBase64 = await buildPassBase64(item.qrCodeUrl);
 
-        // A. Send Email with Image Attachment in Background
+        // A. Send Email with Image Attachment via Backend
         const res = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
           body: JSON.stringify({
@@ -182,8 +182,9 @@
 
         const data = await res.json();
         if(data.status === "success") {
-          // B. Trigger WhatsApp Chat & Auto-Download Merged Pass Image
-          resendWhatsApp(data.phone, data.name, data.ticketId, data.qrCodeUrl);
+          // B. Open WhatsApp Chat directly without downloading
+          const msg = encodeURIComponent(`Hi ${data.name},\nYour Ticket Pass (${data.ticketId}) for QUESTORA'26 has been approved!\n\nYour Entrance QR Code:\n${data.qrCodeUrl}`);
+          window.open(`https://wa.me/${data.phone}?text=${msg}`, '_blank');
           
           document.getElementById("ticketModal").style.display = "flex";
           loadData();
@@ -220,12 +221,12 @@
       }
     }
 
-    // 3. RE-SEND WHATSAPP (AUTO-DOWNLOAD PASS IMAGE & OPEN CHAT)
+    // 3. SEND / RE-SEND WHATSAPP (DOWNLOADS PASS IMAGE ONLY ON THIS ACTION)
     async function resendWhatsApp(phone, name, ticketId, qrUrl) {
       const passBase64 = await buildPassBase64(qrUrl);
       
       if (passBase64) {
-        // Auto Download Merged Template Pass Image onto device
+        // Downloads Merged Pass Image onto device ONLY when clicking Send WhatsApp
         const downloadLink = document.createElement('a');
         downloadLink.href = passBase64;
         downloadLink.download = `QUESTORA26_Pass_${ticketId}.png`;
