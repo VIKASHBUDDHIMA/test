@@ -3,240 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Get-Together Ticket Pass</title>
+  <title>School Reunion 2026 - Ticket Booking</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    body {
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #f8fafc;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .container {
-      background: #1e293b;
-      width: 100%;
-      max-width: 480px;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      border: 1px solid #334155;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .header h2 {
-      color: #38bdf8;
-      font-weight: 700;
-    }
-
-    .header p {
-      font-size: 0.85rem;
-      color: #94a3b8;
-      margin-top: 4px;
-    }
-
-    .bank-details {
-      background: #0f172a;
-      padding: 16px;
-      border-radius: 10px;
-      border-left: 4px solid #38bdf8;
-      margin-bottom: 20px;
-      font-size: 0.9rem;
-    }
-
-    .bank-details h3 {
-      font-size: 1rem;
-      margin-bottom: 8px;
-      color: #f1f5f9;
-    }
-
-    .bank-details p {
-      color: #cbd5e1;
-      line-height: 1.5;
-    }
-
-    .ticket-price-info {
-      margin-top: 8px;
-      color: #38bdf8 !important;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.85rem;
-      color: #cbd5e1;
-      margin-bottom: 6px;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: #fff;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    input:focus {
-      border-color: #38bdf8;
-    }
-
-    .summary {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #334155;
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      font-size: 0.95rem;
-    }
-
-    .summary strong {
-      color: #4ade80;
-      font-size: 1.1rem;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      background: #0284c7;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background: #0369a1;
-    }
-
-    button:disabled {
-      background: #475569;
-      cursor: not-allowed;
-    }
-
-    #statusMessage {
-      margin-top: 16px;
-      padding: 12px;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
-
-    #statusMessage.success {
-      background: #166534;
-      color: #4ade80;
-    }
-
-    #statusMessage.error {
-      background: #991b1b;
-      color: #fca5a5;
-    }
-
-    .hidden {
-      display: none;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+    body { background: linear-gradient(135deg, #0f172a, #1e293b); color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+    .container { background: #1e293b; width: 100%; max-width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h2 { color: #38bdf8; font-weight: 700; }
+    .bank-details { background: #0f172a; padding: 16px; border-radius: 10px; border-left: 4px solid #38bdf8; margin-bottom: 20px; font-size: 0.9rem; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 6px; }
+    input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 0.95rem; outline: none; }
+    input:focus { border-color: #38bdf8; }
+    .summary { display: flex; justify-content: space-between; background: #334155; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
+    .summary strong { color: #4ade80; font-size: 1.1rem; }
+    button { width: 100%; padding: 14px; background: #0284c7; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #0369a1; }
+    
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 20px; }
+    .modal-content { background: #1e293b; padding: 25px; border-radius: 12px; text-align: center; border: 2px solid #38bdf8; max-width: 400px; width: 100%; }
+    .receipt-card { background: #0f172a; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; line-height: 1.8; font-size: 0.9rem; border: 1px dashed #475569; }
   </style>
 </head>
 <body>
+
   <div class="container">
     <div class="header">
       <h2>🎉 School Reunion 2026</h2>
-      <p>Reserve your ticket pass & upload your payment receipt</p>
+      <p style="font-size:0.85rem; color:#94a3b8;">Reserve your ticket pass & upload receipt</p>
     </div>
 
-    <!-- Bank Details Card -->
     <div class="bank-details">
-      <h3>🏦 Bank Account Details</h3>
+      <h3 style="margin-bottom:8px;">🏦 Bank Account Details</h3>
       <p><strong>Bank:</strong> Commercial Bank</p>
       <p><strong>Account Name:</strong> School Alumni Association</p>
       <p><strong>Account Number:</strong> 80012345678</p>
       <p><strong>Branch:</strong> Colombo Main</p>
-      <p class="ticket-price-info">💡 Ticket Price: <strong>LKR 2,500</strong> per person</p>
+      <p style="color:#38bdf8; margin-top:8px;">💡 Ticket Price: <strong>LKR 2,500</strong> per person</p>
     </div>
 
-    <!-- Booking Form -->
     <form id="ticketForm">
       <div class="form-group">
-        <label for="fullName">Full Name</label>
+        <label>Full Name</label>
         <input type="text" id="fullName" required placeholder="John Doe">
       </div>
-
       <div class="form-group">
-        <label for="email">Email Address</label>
+        <label>Email Address</label>
         <input type="email" id="email" required placeholder="john@example.com">
       </div>
-
       <div class="form-group">
-        <label for="phone">Phone Number (WhatsApp)</label>
+        <label>Phone Number (WhatsApp)</label>
         <input type="tel" id="phone" required placeholder="0771234567">
       </div>
-
       <div class="form-group">
-        <label for="ticketCount">Number of Tickets</label>
+        <label>Number of Tickets</label>
         <input type="number" id="ticketCount" min="1" max="10" value="1" required>
       </div>
-
       <div class="summary">
-        <span>Total Amount to Pay:</span>
+        <span>Total Amount:</span>
         <strong id="totalDisplay">LKR 2,500</strong>
       </div>
-
       <div class="form-group">
-        <label for="receipt">Upload Payment Slip / Receipt</label>
-        <input type="file" id="receipt" accept="image/*,.pdf" required>
+        <label>Upload Payment Slip / Receipt</label>
+        <input type="file" id="receipt" accept="image/*" required>
       </div>
-
       <button type="submit" id="submitBtn">Submit Request</button>
     </form>
+  </div>
 
-    <!-- Status Message -->
-    <div id="statusMessage" class="hidden"></div>
+  <!-- User Digital Proof Modal -->
+  <div class="modal" id="proofModal">
+    <div class="modal-content">
+      <h3 style="color:#4ade80;">✅ Request Submitted!</h3>
+      <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Please take a screenshot of this receipt as proof.</p>
+      
+      <div class="receipt-card">
+        <p><strong>Reference ID:</strong> <span id="rId" style="color:#38bdf8;"></span></p>
+        <p><strong>Name:</strong> <span id="rName"></span></p>
+        <p><strong>Amount Paid:</strong> <span id="rAmount"></span></p>
+        <p><strong>Status:</strong> <span style="color:#fbbf24;">Pending Verification</span></p>
+      </div>
+
+      <button onclick="window.print()" style="background:#475569; margin-bottom:10px;">🖨️ Save as PDF / Print</button>
+      <button onclick="location.reload()">Close</button>
+    </div>
   </div>
 
   <script>
-    // Google Apps Script Deploy කල පසු ලැබෙන Web App URL එක මෙතැනට යොදන්න
-    const APPS_SCRIPT_URL = "YOUR_DEPLOYED_WEB_APP_URL_HERE";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2ZZpROE9G3TdT0cG2AsUyQYoCpAWBwusNl0M66PbSI2fgfytmufUEDrH4U_NbfB1V/exec"; // 👈 Paste Web App URL Here
     const TICKET_PRICE = 2500;
 
-    const ticketCountInput = document.getElementById("ticketCount");
+    const ticketCount = document.getElementById("ticketCount");
     const totalDisplay = document.getElementById("totalDisplay");
-    const form = document.getElementById("ticketForm");
-    const submitBtn = document.getElementById("submitBtn");
-    const statusMessage = document.getElementById("statusMessage");
 
-    // Dynamic Price Calculation
-    ticketCountInput.addEventListener("input", () => {
-      const count = parseInt(ticketCountInput.value) || 1;
-      const total = count * TICKET_PRICE;
-      totalDisplay.textContent = `LKR ${total.toLocaleString()}`;
+    ticketCount.addEventListener("input", () => {
+      const count = parseInt(ticketCount.value) || 1;
+      totalDisplay.textContent = `LKR ${(count * TICKET_PRICE).toLocaleString()}`;
     });
 
-    // Helper: Convert File to Base64
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -246,55 +111,48 @@
       });
     }
 
-    // Form Submission
-    form.addEventListener("submit", async (e) => {
+    document.getElementById("ticketForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      
-      if (APPS_SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxrKHy_vY6TuQZ5hRjRRgQF2NFVMeUg7bF1qiiGjLO5DJbAi3hsGp14SG-lSOng9Dsk-Q/exec") {
-        alert("කරුණාකර Apps Script Web App URL එක script එකෙහි ඇතුළත් කරන්න.");
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Uploading & Submitting...";
-      statusMessage.className = "hidden";
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true; 
+      btn.textContent = "Uploading & Submitting...";
 
       try {
-        const fileInput = document.getElementById("receipt").files[0];
-        const base64File = await fileToBase64(fileInput);
+        const file = document.getElementById("receipt").files[0];
+        const base64 = await fileToBase64(file);
 
-        const formData = new URLSearchParams();
-        formData.append("fullName", document.getElementById("fullName").value);
-        formData.append("email", document.getElementById("email").value);
-        formData.append("phone", document.getElementById("phone").value);
-        formData.append("ticketCount", ticketCountInput.value);
-        formData.append("totalAmount", ticketCountInput.value * TICKET_PRICE);
-        formData.append("fileName", fileInput.name);
-        formData.append("fileType", fileInput.type);
-        formData.append("fileData", base64File);
+        const payload = {
+          action: "submitBooking",
+          fullName: document.getElementById("fullName").value,
+          email: document.getElementById("email").value,
+          phone: document.getElementById("phone").value,
+          ticketCount: ticketCount.value,
+          totalAmount: ticketCount.value * TICKET_PRICE,
+          fileName: file.name,
+          fileType: file.type,
+          fileData: base64
+        };
 
-        const response = await fetch(APPS_SCRIPT_URL, {
+        const res = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
-          body: formData
+          body: JSON.stringify(payload)
         });
 
-        const result = await response.json();
+        const data = await res.json();
 
-        if (result.status === "success") {
-          statusMessage.textContent = `✅ Request Sent! Your Reference Ticket ID: ${result.ticketId}. We will verify your payment and email the QR pass.`;
-          statusMessage.className = "success";
-          form.reset();
-          totalDisplay.textContent = `LKR ${TICKET_PRICE.toLocaleString()}`;
+        if (data.status === "success") {
+          document.getElementById("rId").textContent = data.ticketId;
+          document.getElementById("rName").textContent = data.fullName;
+          document.getElementById("rAmount").textContent = "LKR " + data.totalAmount;
+          document.getElementById("proofModal").style.display = "flex";
         } else {
-          throw new Error(result.message);
+          alert("Submission Error: " + data.message);
         }
-
-      } catch (error) {
-        statusMessage.textContent = "❌ Submission failed. Please try again or contact support.";
-        statusMessage.className = "error";
+      } catch (err) {
+        alert("Submission failed. Please check internet connection.");
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Request";
+        btn.disabled = false; 
+        btn.textContent = "Submit Request";
       }
     });
   </script>
