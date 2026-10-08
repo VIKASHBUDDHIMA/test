@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Reunion 2026 - Ticket Booking</title>
+  <title>QUESTORA'26 - Ticket Booking</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
     body { background: linear-gradient(135deg, #0f172a, #1e293b); color: #f8fafc; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
     .container { background: #1e293b; width: 100%; max-width: 480px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
     .header { text-align: center; margin-bottom: 20px; }
-    .header h2 { color: #38bdf8; font-weight: 700; }
+    .header h2 { color: #38bdf8; font-weight: 700; letter-spacing: 1px; }
     .bank-details { background: #0f172a; padding: 16px; border-radius: 10px; border-left: 4px solid #38bdf8; margin-bottom: 20px; font-size: 0.9rem; }
     .form-group { margin-bottom: 16px; }
     label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 6px; }
@@ -30,16 +30,15 @@
 
   <div class="container">
     <div class="header">
-      <h2>🎉 School Reunion 2026</h2>
-      <p style="font-size:0.85rem; color:#94a3b8;">Get your entrance pass (1 Pass per person)</p>
+      <h2>✨ QUESTORA'26</h2>
+      <p style="font-size:0.85rem; color:#94a3b8;">Reserve your entrance pass (1 Pass per person)</p>
     </div>
 
     <div class="bank-details">
       <h3 style="margin-bottom:8px;">🏦 Bank Account Details</h3>
       <p><strong>Bank:</strong> Commercial Bank</p>
-      <p><strong>Account Name:</strong> School Alumni Association</p>
+      <p><strong>Account Name:</strong> Diyathalawa Central College 2023 Batch</p>
       <p><strong>Account Number:</strong> 80012345678</p>
-      <p><strong>Branch:</strong> Colombo Main</p>
       <p style="color:#38bdf8; margin-top:8px;">💡 Ticket Price: <strong>LKR 2,500</strong></p>
     </div>
 
@@ -63,7 +62,7 @@
       </div>
       
       <div class="form-group">
-        <label>Upload Payment Slip / Receipt</label>
+        <label>Upload Payment Slip Image</label>
         <input type="file" id="receipt" accept="image/*" required>
       </div>
       <button type="submit" id="submitBtn">Submit Request</button>
@@ -73,23 +72,23 @@
   <!-- User Proof Modal -->
   <div class="modal" id="proofModal">
     <div class="modal-content">
-      <h3 style="color:#4ade80;">✅ Request Submitted!</h3>
-      <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Please save/screenshot this receipt as proof.</p>
+      <h3 style="color:#4ade80;">✅ Booking Request Sent!</h3>
+      <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Please take a screenshot of this receipt as proof.</p>
       
       <div class="receipt-card">
         <p><strong>Reference ID:</strong> <span id="rId" style="color:#38bdf8;"></span></p>
         <p><strong>Name:</strong> <span id="rName"></span></p>
-        <p><strong>Amount Paid:</strong> <span id="rAmount">LKR 2,500</span></p>
+        <p><strong>Amount Paid:</strong> <span>LKR 2,500</span></p>
         <p><strong>Status:</strong> <span style="color:#fbbf24;">Pending Verification</span></p>
       </div>
 
       <button onclick="window.print()" style="background:#475569; margin-bottom:10px;">🖨️ Save as PDF / Print</button>
-      <button onclick="location.reload()">Close</button>
+      <button onclick="location.reload()" style="background:#0284c7;">Close</button>
     </div>
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHGDFiIbaXTV99V0Puxgh11kt7Jd9TEhLXGE7lb7i8NDaqP877zTXz2SF9qIGJGjTz6Q/exec"; // 👈 Your Web App URL
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBxTRxMstyjg0vrM7D6uDj3_VScO0TMYWjbqVDwjQcZfB8k9UH6PuwLhX8z4tOWp1HLg/exec"; // 👈 Your Web App URL
     const FIXED_PRICE = 2500;
 
     function fileToBase64(file) {
@@ -134,7 +133,7 @@
           document.getElementById("rName").textContent = data.fullName;
           document.getElementById("proofModal").style.display = "flex";
         } else if (data.status === "duplicate") {
-          alert("⚠️ Warning: " + data.message);
+          alert("⚠️ " + data.message);
         } else {
           alert("Error: " + data.message);
         }
