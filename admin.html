@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Ticket Verification</title>
+  <title>Admin Dashboard - Ticket Approvals</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
@@ -15,18 +15,19 @@
     table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     th, td { padding: 14px; text-align: left; border-bottom: 1px solid #334155; font-size: 0.88rem; }
     th { background: #0284c7; color: #fff; }
-    tr:hover { background: #334155; }
     
-    .badge { padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; display: inline-block; }
-    .pending { background: #d97706; color: #fff; }
-    .approved { background: #16a34a; color: #fff; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; }
+    .pending { background: #d97706; }
+    .approved { background: #16a34a; }
     
-    button.view-btn { padding: 6px 12px; border: none; border-radius: 4px; background: #38bdf8; color: #000; font-weight: 600; cursor: pointer; }
-    button.approve-btn { padding: 6px 12px; border: none; border-radius: 4px; background: #22c55e; color: #fff; font-weight: 600; cursor: pointer; }
+    button { padding: 6px 12px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; }
+    .view-btn { background: #38bdf8; color: #000; }
+    .approve-btn { background: #22c55e; color: #fff; }
     select { padding: 6px; border-radius: 4px; background: #0f172a; color: #fff; border: 1px solid #475569; }
     
-    .img-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 100; }
-    .img-modal img { max-width: 90%; max-height: 85vh; border-radius: 8px; border: 2px solid #38bdf8; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 100; }
+    .modal-card { background: #1e293b; padding: 20px; border-radius: 12px; max-width: 90%; text-align: center; }
+    .modal img, canvas { max-width: 100%; max-height: 75vh; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -42,7 +43,6 @@
         <th>Ticket ID</th>
         <th>Customer Name</th>
         <th>Phone</th>
-        <th>Tickets / Amount</th>
         <th>Payment Slip</th>
         <th>Status</th>
         <th>Send Pass Via</th>
@@ -50,91 +50,145 @@
       </tr>
     </thead>
     <tbody id="tableBody">
-      <tr><td colspan="8" style="text-align:center;">Loading records...</td></tr>
+      <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
     </tbody>
   </table>
 
-  <!-- Modal for Viewing Slip Photo -->
-  <div class="img-modal" id="imgModal" onclick="this.style.display='none'">
-    <img id="modalImg" src="" alt="Payment Receipt">
+  <!-- Modal for View Slip -->
+  <div class="modal" id="slipModal" onclick="this.style.display='none'">
+    <div class="modal-card">
+      <img id="slipImg" src="">
+    </div>
+  </div>
+
+  <!-- Modal for Generated Ticket Preview -->
+  <div class="modal" id="ticketModal">
+    <div class="modal-card">
+      <h3 style="color:#38bdf8; margin-bottom:10px;">🎟️ Generated Pass Preview</h3>
+      <canvas id="ticketCanvas"></canvas>
+      <div style="margin-top:15px; display:flex; gap:10px; justify-content:center;">
+        <a id="downloadTicketBtn" download="ticket-pass.png" style="padding:10px 15px; background:#22c55e; color:#fff; text-decoration:none; border-radius:6px; font-weight:600;">📥 Download Pass Image</a>
+        <button onclick="document.getElementById('ticketModal').style.display='none'" style="background:#475569; color:#fff;">Close</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2ZZpROE9G3TdT0cG2AsUyQYoCpAWBwusNl0M66PbSI2fgfytmufUEDrH4U_NbfB1V/exec"; // 👈 Paste Web App URL Here
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHGDFiIbaXTV99V0Puxgh11kt7Jd9TEhLXGE7lb7i8NDaqP877zTXz2SF9qIGJGjTz6Q/exec"; // 👈 Paste Web App URL
 
     async function loadData() {
       const tbody = document.getElementById("tableBody");
-      tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>Loading data...</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Loading data...</td></tr>";
 
       try {
         const res = await fetch(APPS_SCRIPT_URL);
         const data = await res.json();
 
         tbody.innerHTML = "";
-        if(data.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='8' style='text-align:center;'>No bookings found yet.</td></tr>";
-          return;
-        }
-
         data.forEach(item => {
           const row = document.createElement("tr");
           row.innerHTML = `
             <td><strong>${item.ticketId}</strong></td>
             <td>${item.fullName}<br><small style="color:#94a3b8">${item.email}</small></td>
             <td>${item.phone}</td>
-            <td>${item.ticketCount} Tkt(s)<br><strong style="color:#4ade80">LKR ${item.totalAmount}</strong></td>
-            <td><button class="view-btn" onclick="viewSlip('${item.receiptUrl}')">📸 View Slip</button></td>
+            <td><button class="view-btn" onclick="viewSlip('${item.receiptUrl}')">📸 Slip</button></td>
             <td><span class="badge ${item.status.toLowerCase()}">${item.status}</span></td>
             <td>
               <select id="method-${item.rowIndex}">
-                <option value="email">Email</option>
                 <option value="whatsapp">WhatsApp</option>
+                <option value="email">Email</option>
               </select>
             </td>
             <td>
               ${item.status === "Pending" ? 
                 `<button class="approve-btn" onclick="approve(${item.rowIndex})">Approve</button>` : 
-                `<span style="color:#4ade80; font-weight:600;">Approved</span>`}
+                `<button onclick="generatePassCard('${item.fullName}', '${item.ticketId}', '${item.qrCodeUrl}')" style="background:#0284c7; color:#fff;">View Ticket</button>`}
             </td>
           `;
           tbody.appendChild(row);
         });
       } catch(e) {
-        tbody.innerHTML = "<tr><td colspan='8' style='text-align:center; color:#fca5a5;'>Failed to load data. Ensure script URL is correct.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center; color:#fca5a5;'>Failed to load data.</td></tr>";
       }
     }
 
     function viewSlip(url) {
-      document.getElementById("modalImg").src = url;
-      document.getElementById("imgModal").style.display = "flex";
+      document.getElementById("slipImg").src = url;
+      document.getElementById("slipModal").style.display = "flex";
+    }
+
+    // -------------------------------------------------------------
+    // CANVAS: TEMPLATE + QR + NAME MERGING LOGIC
+    // -------------------------------------------------------------
+    function generatePassCard(name, ticketId, qrUrl) {
+      const canvas = document.getElementById("ticketCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const templateImg = new Image();
+      templateImg.crossOrigin = "Anonymous";
+      templateImg.src = "ticket-template.png"; // 👈 Path to your template image in GitHub
+
+      templateImg.onload = () => {
+        canvas.width = templateImg.width;
+        canvas.height = templateImg.height;
+
+        // 1. Draw Template Background
+        ctx.drawImage(templateImg, 0, 0);
+
+        // 2. Draw QR Code
+        const qrImg = new Image();
+        qrImg.crossOrigin = "Anonymous";
+        qrImg.src = qrUrl;
+
+        qrImg.onload = () => {
+          // 🛠️ Adjust QR Position and Size here:
+          const qrSize = 180;
+          const qrX = canvas.width - qrSize - 50; // Right side
+          const qrY = (canvas.height - qrSize) / 2; // Vertically centered
+
+          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+          // 3. Draw Text (Name & Ticket ID)
+          ctx.fillStyle = "#FFFFFF"; // Font color
+          ctx.font = "bold 28px Poppins, sans-serif";
+          ctx.fillText("Name: " + name, 50, canvas.height - 90);
+          
+          ctx.fillStyle = "#38BDF8";
+          ctx.font = "600 22px Poppins, sans-serif";
+          ctx.fillText("ID: " + ticketId, 50, canvas.height - 50);
+
+          // Enable Download Link
+          const dataUrl = canvas.toDataURL("image/png");
+          document.getElementById("downloadTicketBtn").href = dataUrl;
+          document.getElementById("ticketModal").style.display = "flex";
+        };
+      };
     }
 
     async function approve(rowIndex) {
       const sendMethod = document.getElementById(`method-${rowIndex}`).value;
       if(!confirm(`Confirm approval and send pass via ${sendMethod.toUpperCase()}?`)) return;
 
-      try {
-        const res = await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "approveBooking",
-            rowIndex: rowIndex,
-            sendMethod: sendMethod
-          })
-        });
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "approveBooking",
+          rowIndex: rowIndex,
+          sendMethod: sendMethod
+        })
+      });
 
-        const data = await res.json();
-        if(data.status === "success") {
-          if(sendMethod === "whatsapp") {
-            const msg = encodeURIComponent(`Hi ${data.name},\nYour Ticket Pass (${data.ticketId}) for the School Reunion has been approved!\n\nYour Gate Entrance QR Code:\n${data.qrCodeUrl}`);
-            window.open(`https://wa.me/${data.phone}?text=${msg}`, '_blank');
-          } else {
-            alert("Success! Approved and Confirmation Email Sent.");
-          }
-          loadData();
+      const data = await res.json();
+      if(data.status === "success") {
+        generatePassCard(data.name, data.ticketId, data.qrCodeUrl);
+
+        if(sendMethod === "whatsapp") {
+          const msg = encodeURIComponent(`Hi ${data.name},\nYour Ticket Pass (${data.ticketId}) for School Reunion 2026 is approved!\n\nQR Pass Link: ${data.qrCodeUrl}`);
+          window.open(`https://wa.me/${data.phone}?text=${msg}`, '_blank');
+        } else {
+          alert("Approved! Confirmation Email sent.");
         }
-      } catch(err) {
-        alert("Approval failed!");
+        loadData();
       }
     }
 
