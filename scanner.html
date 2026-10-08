@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>QUESTORA'26 - Gate Scanner</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -10,38 +10,37 @@
     :root {
       --bg-dark: #08090C;
       --gold-primary: #D4AF37;
-      --border-glow: rgba(212, 175, 55, 0.3);
     }
     * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
-    body { background-color: var(--bg-dark); color: #FFF; text-align: center; padding: 30px 20px; }
+    body { background-color: var(--bg-dark); color: #FFF; text-align: center; padding: 20px 15px; }
 
-    h2 { font-family: 'Cinzel', serif; color: var(--gold-primary); font-size: 1.6rem; margin-bottom: 5px; }
-    p.sub { font-size: 0.85rem; color: #94A3B8; margin-bottom: 25px; }
+    h2 { font-family: 'Cinzel', serif; color: var(--gold-primary); font-size: clamp(1.2rem, 5vw, 1.6rem); margin-bottom: 4px; }
+    p.sub { font-size: 0.8rem; color: #94A3B8; margin-bottom: 20px; }
 
     #reader {
-      width: 100%; max-width: 420px; margin: 0 auto; border-radius: 20px; overflow: hidden;
-      border: 2px solid var(--gold-primary); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+      width: 100%; max-width: 360px; margin: 0 auto; border-radius: 16px; overflow: hidden;
+      border: 2px solid var(--gold-primary); box-shadow: 0 0 25px rgba(212, 175, 55, 0.2);
     }
 
-    #resultBox { margin-top: 25px; padding: 25px; border-radius: 16px; display: none; backdrop-filter: blur(10px); }
-    .valid { background: rgba(22, 101, 52, 0.9); color: #4ADE80; border: 2px solid #22C55E; box-shadow: 0 0 30px rgba(34, 197, 94, 0.4); }
-    .used { background: rgba(153, 27, 27, 0.9); color: #FCA5A5; border: 2px solid #EF4444; box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
-    .invalid { background: rgba(124, 45, 18, 0.9); color: #FDBA74; border: 2px solid #F97316; box-shadow: 0 0 30px rgba(249, 115, 22, 0.4); }
+    #resultBox { margin-top: 20px; padding: 20px 15px; border-radius: 14px; display: none; }
+    .valid { background: rgba(22, 101, 52, 0.95); color: #4ADE80; border: 2px solid #22C55E; }
+    .used { background: rgba(153, 27, 27, 0.95); color: #FCA5A5; border: 2px solid #EF4444; }
+    .invalid { background: rgba(124, 45, 18, 0.95); color: #FDBA74; border: 2px solid #F97316; }
 
-    button { margin-top: 15px; padding: 12px 28px; background: var(--gold-primary); color: #000; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; }
+    button { margin-top: 14px; padding: 12px 24px; background: var(--gold-primary); color: #000; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
   </style>
 </head>
 <body>
 
-  <h2>🎟️ QUESTORA'26 GATE PASS SCANNER</h2>
-  <p class="sub">Point camera at attendee's QR Pass to verify entrance</p>
+  <h2>🎟️ QUESTORA'26 SCANNER</h2>
+  <p class="sub">Point camera at attendee's QR Pass</p>
 
   <div id="reader"></div>
 
   <div id="resultBox">
-    <h3 id="resTitle" style="font-family:'Cinzel', serif; font-size:1.4rem;"></h3>
-    <p id="resMsg" style="margin-top:8px; font-size:0.95rem;"></p>
-    <p id="resName" style="font-weight:700; margin-top:10px; font-size:1.2rem; text-transform:uppercase;"></p>
+    <h3 id="resTitle" style="font-family:'Cinzel', serif; font-size:1.3rem;"></h3>
+    <p id="resMsg" style="margin-top:6px; font-size:0.9rem;"></p>
+    <p id="resName" style="font-weight:700; margin-top:8px; font-size:1.15rem; text-transform:uppercase;"></p>
     <button onclick="resetScanner()">📷 Scan Next Ticket</button>
   </div>
 
@@ -86,12 +85,12 @@
       } catch (e) {
         box.className = "invalid";
         document.getElementById("resTitle").textContent = "⚠️ CONNECTION ERROR";
-        document.getElementById("resMsg").textContent = "Check network or script deployment status.";
+        document.getElementById("resMsg").textContent = "Check network connection.";
       }
     }
 
     function startScanner() {
-      html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+      html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 220 });
       html5QrcodeScanner.render(onScanSuccess);
     }
 
